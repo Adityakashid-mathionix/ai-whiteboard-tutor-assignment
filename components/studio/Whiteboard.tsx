@@ -19,11 +19,11 @@ import {
   Highlighter,
   Eraser,
   Undo2,
-  Redo2,
   Trash2,
   Info,
   X,
   Crosshair,
+  Layers,
 } from "lucide-react";
 
 interface StudentStroke {
@@ -62,7 +62,7 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeTool, setActiveTool] = useState<"pointer" | "pan" | "pen" | "highlighter" | "eraser">("pointer");
-  const [penColor, setPenColor] = useState<string>("#2563eb"); // default electric blue
+  const [penColor, setPenColor] = useState<string>("#0066ff");
   const [laserPos, setLaserPos] = useState<{ x: number; y: number } | null>(null);
   const [showLaser, setShowLaser] = useState(true);
 
@@ -148,8 +148,8 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
       const newStroke: StudentStroke = {
         id: `st-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         tool: activeTool,
-        color: activeTool === "highlighter" ? "rgba(253, 224, 71, 0.45)" : penColor,
-        width: activeTool === "highlighter" ? 18 : 3,
+        color: activeTool === "highlighter" ? "rgba(255, 215, 0, 0.4)" : penColor,
+        width: activeTool === "highlighter" ? 18 : 3.5,
         points: [coords],
       };
       setCurrentStroke(newStroke);
@@ -222,7 +222,6 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
     setPanOffset({ x: 0, y: 0 });
   };
 
-  // Convert points array to smooth SVG path string
   const renderStrokePath = (points: { x: number; y: number }[]) => {
     if (points.length < 2) return "";
     let d = `M ${points[0].x} ${points[0].y}`;
@@ -235,58 +234,60 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative flex flex-col w-full h-full bg-[#0b0f17] rounded-2xl border border-slate-800/90 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden transition-all duration-300 ${
+      className={`relative flex flex-col w-full h-full bg-[#10121a] rounded-2xl border border-[#222533] shadow-[0_25px_60px_rgba(0,0,0,0.6)] overflow-hidden transition-all duration-300 ${
         isFullscreen ? "p-4" : ""
       }`}
     >
-      {/* Studio Top Island Bar */}
-      <div className="flex flex-wrap items-center justify-between px-4 py-2.5 bg-[#0f172a]/95 border-b border-slate-800 backdrop-blur-xl z-20 gap-2">
-        {/* Left: Indicator & Current Chapter */}
+      {/* Smartboard Hardware Header Bar */}
+      <div className="flex flex-wrap items-center justify-between px-4 py-2.5 bg-[#141722] border-b border-[#222533] z-20 gap-2">
+        {/* Left: Hardware Model & Chapter Tag */}
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(37,99,235,0.8)]" />
-            <span className="text-[11px] font-mono tracking-wider text-slate-200 font-bold uppercase">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#0066ff] shadow-[0_0_8px_rgba(0,102,255,0.9)]" />
+            <span className="text-[11px] font-mono tracking-widest text-neutral-200 font-bold uppercase">
               SMARTBOARD
             </span>
           </div>
 
-          <div className="h-3.5 w-px bg-slate-800" />
+          <div className="h-3.5 w-px bg-[#262a3a]" />
 
           {currentSegmentHeading && (
-            <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs text-blue-300 font-medium max-w-sm truncate shadow-sm">
-              <Sparkles className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+            <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#1a1d2c] border border-[#262a3a] text-xs text-[#00d2ff] font-medium max-w-sm truncate shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 text-[#00d2ff] flex-shrink-0" />
               <span className="truncate">{currentSegmentHeading}</span>
             </div>
           )}
         </div>
 
-        {/* Center: Student Drawing & Interaction Tools */}
-        <div className="flex items-center space-x-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800 shadow-inner">
+        {/* Center: Stylus & Student Tools Bar */}
+        <div className="flex items-center space-x-1 bg-[#1a1d2c] p-1 rounded-xl border border-[#262a3a]">
+          {/* Pointer Tool */}
           <button
             onClick={() => setActiveTool("pointer")}
-            title="Pointer / Select Object"
+            title="Inspect / Pointer Tool"
             className={`p-1.5 rounded-lg text-xs transition-colors ${
               activeTool === "pointer"
-                ? "bg-blue-600 text-white shadow-sm"
-                : "text-slate-400 hover:text-slate-200"
+                ? "bg-[#0066ff] text-white shadow-sm"
+                : "text-neutral-400 hover:text-neutral-200"
             }`}
           >
             <MousePointer2 className="w-3.5 h-3.5" />
           </button>
 
+          {/* Pan Tool */}
           <button
             onClick={() => setActiveTool("pan")}
             title="Pan Canvas Mode"
             className={`p-1.5 rounded-lg text-xs transition-colors ${
               activeTool === "pan"
-                ? "bg-blue-600 text-white shadow-sm"
-                : "text-slate-400 hover:text-slate-200"
+                ? "bg-[#0066ff] text-white shadow-sm"
+                : "text-neutral-400 hover:text-neutral-200"
             }`}
           >
             <Move className="w-3.5 h-3.5" />
           </button>
 
-          <div className="h-3 w-px bg-slate-800 mx-0.5" />
+          <div className="h-3 w-px bg-[#262a3a] mx-0.5" />
 
           {/* Student Pen */}
           <button
@@ -294,21 +295,21 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
             title="Student Notes Pen"
             className={`p-1.5 rounded-lg text-xs transition-colors ${
               activeTool === "pen"
-                ? "bg-blue-600 text-white shadow-sm"
-                : "text-slate-400 hover:text-slate-200"
+                ? "bg-[#0066ff] text-white shadow-sm"
+                : "text-neutral-400 hover:text-neutral-200"
             }`}
           >
             <PenTool className="w-3.5 h-3.5" />
           </button>
 
-          {/* Pen Color Dots (visible when pen active) */}
+          {/* Pen Color Selector */}
           {activeTool === "pen" && (
             <div className="flex items-center space-x-1 px-1">
               {[
-                { color: "#2563eb", title: "Electric Blue" },
-                { color: "#dc2626", title: "Crimson" },
-                { color: "#059669", title: "Emerald" },
-                { color: "#0f172a", title: "Charcoal" },
+                { color: "#0066ff", title: "Cobalt Blue" },
+                { color: "#090a0f", title: "Carbon Black" },
+                { color: "#e62e4d", title: "Crimson" },
+                { color: "#00b875", title: "Emerald" },
               ].map((c) => (
                 <button
                   key={c.color}
@@ -326,11 +327,11 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
           {/* Student Highlighter */}
           <button
             onClick={() => setActiveTool("highlighter")}
-            title="Student Highlighter"
+            title="Highlighter Marker"
             className={`p-1.5 rounded-lg text-xs transition-colors ${
               activeTool === "highlighter"
-                ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 shadow-sm"
-                : "text-slate-400 hover:text-slate-200"
+                ? "bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-sm"
+                : "text-neutral-400 hover:text-neutral-200"
             }`}
           >
             <Highlighter className="w-3.5 h-3.5" />
@@ -339,11 +340,11 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
           {/* Eraser */}
           <button
             onClick={() => setActiveTool("eraser")}
-            title="Erase Student Annotations"
+            title="Erase Student Drawings"
             className={`p-1.5 rounded-lg text-xs transition-colors ${
               activeTool === "eraser"
                 ? "bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-sm"
-                : "text-slate-400 hover:text-slate-200"
+                : "text-neutral-400 hover:text-neutral-200"
             }`}
           >
             <Eraser className="w-3.5 h-3.5" />
@@ -353,8 +354,8 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
             <>
               <button
                 onClick={handleUndo}
-                title="Undo student stroke"
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200"
+                title="Undo stroke"
+                className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-200"
               >
                 <Undo2 className="w-3 h-3" />
               </button>
@@ -368,67 +369,67 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
             </>
           )}
 
-          <div className="h-3 w-px bg-slate-800 mx-0.5" />
+          <div className="h-3 w-px bg-[#262a3a] mx-0.5" />
 
-          {/* Laser Pointer Toggle */}
+          {/* Laser Pointer */}
           <button
             onClick={() => setShowLaser(!showLaser)}
             title={showLaser ? "Disable Teacher Laser" : "Enable Teacher Laser"}
             className={`p-1.5 rounded-lg text-xs transition-colors ${
-              showLaser ? "text-rose-400 bg-rose-500/10" : "text-slate-500"
+              showLaser ? "text-rose-400 bg-rose-500/10" : "text-neutral-500"
             }`}
           >
             <Crosshair className="w-3.5 h-3.5" />
           </button>
 
-          {/* Grid Toggle */}
+          {/* Grid Matrix */}
           <button
             onClick={onToggleGrid}
             title={showGrid ? "Hide Grid Matrix" : "Show Grid Matrix"}
             className={`p-1.5 rounded-lg text-xs transition-colors ${
-              showGrid ? "bg-slate-800 text-blue-400" : "text-slate-400 hover:text-slate-200"
+              showGrid ? "bg-[#262a3a] text-[#00d2ff]" : "text-neutral-400 hover:text-neutral-200"
             }`}
           >
             <Grid className="w-3.5 h-3.5" />
           </button>
 
-          <div className="h-3 w-px bg-slate-800 mx-0.5" />
+          <div className="h-3 w-px bg-[#262a3a] mx-0.5" />
 
           {/* Zoom controls */}
           <button
             onClick={onZoomOut}
             title="Zoom Out"
             disabled={zoom <= 0.75}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 disabled:opacity-30"
+            className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-200 disabled:opacity-30"
           >
             <ZoomOut className="w-3.5 h-3.5" />
           </button>
-          <span className="text-[11px] font-mono text-slate-300 w-9 text-center font-semibold">
+          <span className="text-[11px] font-mono text-neutral-200 w-9 text-center font-bold">
             {Math.round(zoom * 100)}%
           </span>
           <button
             onClick={onZoomIn}
             title="Zoom In"
             disabled={zoom >= 1.5}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 disabled:opacity-30"
+            className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-200 disabled:opacity-30"
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={handleResetAll}
             title="Reset Zoom & Pan"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200"
+            className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-200"
           >
             <RotateCcw className="w-3 h-3" />
           </button>
 
-          <div className="h-3 w-px bg-slate-800 mx-0.5" />
+          <div className="h-3 w-px bg-[#262a3a] mx-0.5" />
 
           {/* Fullscreen */}
           <button
             onClick={toggleFullscreen}
             title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200"
+            className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-200"
           >
             {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
           </button>
@@ -436,14 +437,12 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
       </div>
 
       {/* Main Whiteboard Canvas Surface */}
-      <div
-        className="relative flex-1 w-full h-full min-h-[460px] lg:min-h-[540px] flex items-center justify-center overflow-hidden p-3 select-none bg-[#090d14]"
-      >
-        {/* The Digital Whiteboard Slate: Crisp Clean White Surface */}
+      <div className="relative flex-1 w-full h-full min-h-[460px] lg:min-h-[540px] flex items-center justify-center overflow-hidden p-4 select-none bg-[#090a0f]">
+        {/* The Porcelain White Smartboard Chassis */}
         <div
-          className={`w-full h-full max-w-[1000px] max-h-[600px] rounded-xl overflow-hidden shadow-[0_10px_35px_rgba(0,0,0,0.35)] border border-slate-700/80 transition-transform duration-100 ease-out cursor-${
+          className={`w-full h-full max-w-[1000px] max-h-[600px] rounded-xl overflow-hidden border-2 border-[#2b3042] transition-transform duration-100 ease-out cursor-${
             activeTool === "pan" ? (isPanning ? "grabbing" : "grab") : activeTool === "pen" || activeTool === "highlighter" ? "crosshair" : "default"
-          } ${showGrid ? "whiteboard-canvas-light" : "bg-white"}`}
+          } ${showGrid ? "smartboard-porcelain" : "bg-[#fcfdfe] shadow-[0_12px_45px_rgba(0,0,0,0.5)]"}`}
           style={{
             transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
           }}
@@ -468,7 +467,7 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
                 refY="4"
                 orient="auto"
               >
-                <polygon points="0 0, 8 4, 0 8" fill="#2563eb" />
+                <polygon points="0 0, 8 4, 0 8" fill="#0066ff" />
               </marker>
               <marker
                 id="arrowhead-sky"
@@ -478,7 +477,7 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
                 refY="4"
                 orient="auto"
               >
-                <polygon points="0 0, 8 4, 0 8" fill="#0284c7" />
+                <polygon points="0 0, 8 4, 0 8" fill="#00a8e8" />
               </marker>
               <marker
                 id="arrowhead-emerald"
@@ -488,11 +487,11 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
                 refY="4"
                 orient="auto"
               >
-                <polygon points="0 0, 8 4, 0 8" fill="#059669" />
+                <polygon points="0 0, 8 4, 0 8" fill="#00b875" />
               </marker>
             </defs>
 
-            {/* AI Teacher Whiteboard Actions Layer */}
+            {/* AI Teacher Whiteboard Layer */}
             <g id="teacher-layer">
               {actions.map((action) => (
                 <WhiteboardActionRenderer
@@ -504,7 +503,7 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
               ))}
             </g>
 
-            {/* Student Freehand Annotation Layer (Completely Independent) */}
+            {/* Student Freehand Annotation Layer */}
             <g id="student-layer">
               {studentStrokes.map((stroke) => (
                 <path
@@ -537,15 +536,15 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
                   cx={laserPos.x}
                   cy={laserPos.y}
                   r="7"
-                  fill="#ef4444"
+                  fill="#ff3355"
                   className="animate-ping opacity-75"
                 />
                 <circle
                   cx={laserPos.x}
                   cy={laserPos.y}
                   r="4"
-                  fill="#dc2626"
-                  filter="drop-shadow(0 0 8px #ef4444)"
+                  fill="#e62e4d"
+                  filter="drop-shadow(0 0 8px #ff3355)"
                 />
               </g>
             )}
@@ -556,13 +555,13 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
                 <text
                   x="500"
                   y="270"
-                  fill="#475569"
+                  fill="#2b3042"
                   fontSize="22"
                   textAnchor="middle"
                   fontFamily="system-ui, -apple-system, sans-serif"
-                  fontWeight="600"
+                  fontWeight="700"
                 >
-                  Interactive Smartboard Canvas
+                  Interactive Digital Smartboard
                 </text>
                 <text
                   x="500"
@@ -582,26 +581,26 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
         {/* Floating Concept Inspection Card (When Clicking Objects with Details) */}
         {inspectedAction && (
           <div className="absolute top-6 left-1/2 -translate-x-1/2 max-w-lg w-full px-4 z-30 animate-in fade-in slide-in-from-top-4 duration-200">
-            <div className="p-4 rounded-xl bg-slate-900/95 border border-blue-500/40 text-slate-100 shadow-2xl backdrop-blur-xl flex items-start justify-between space-x-3">
+            <div className="p-4 rounded-xl bg-[#141722]/95 border border-[#0066ff]/50 text-neutral-100 shadow-2xl backdrop-blur-xl flex items-start justify-between space-x-3">
               <div className="flex items-start space-x-3">
-                <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400 mt-0.5">
+                <div className="p-2 rounded-lg bg-[#0066ff]/20 text-[#00d2ff] mt-0.5">
                   <Info className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-blue-400">
+                  <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-[#00d2ff]">
                     Concept Breakdown
                   </h4>
                   <p className="text-sm font-semibold text-white mt-0.5">
                     {(inspectedAction as any).text || (inspectedAction as any).caption || (inspectedAction as any).label || "Diagram Component"}
                   </p>
-                  <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                  <p className="text-xs text-neutral-300 mt-1 leading-relaxed">
                     {(inspectedAction as any).details || (inspectedAction as any).tooltip || "This visual element represents a core component in the lesson flow."}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setInspectedAction(null)}
-                className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-1 rounded-md text-neutral-400 hover:text-white hover:bg-[#1a1d2c] transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -611,34 +610,36 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
 
         {/* Live Audio Oscilloscope Wave Indicator (When Speaking) */}
         {status === "playing" && (
-          <div className="absolute bottom-4 left-4 flex items-center space-x-2 px-3 py-1.5 rounded-full bg-slate-900/90 border border-slate-800 backdrop-blur-md shadow-lg pointer-events-none">
-            <Radio className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
-            <span className="text-[10px] font-mono font-semibold text-blue-400">
+          <div className="absolute bottom-5 left-5 flex items-center space-x-2 px-3 py-1.5 rounded-full bg-[#141722]/95 border border-[#262a3a] backdrop-blur-md shadow-lg pointer-events-none">
+            <Radio className="w-3.5 h-3.5 text-[#00d2ff] animate-pulse" />
+            <span className="text-[10px] font-mono font-bold text-[#00d2ff]">
               VOICE NARRATION SYNC
             </span>
             <div className="flex items-center space-x-0.5 ml-1">
-              <span className="w-1 h-3 bg-blue-400 rounded-full animate-bounce [animation-delay:0ms]" />
-              <span className="w-1 h-4 bg-blue-400 rounded-full animate-bounce [animation-delay:150ms]" />
-              <span className="w-1 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:300ms]" />
-              <span className="w-1 h-5 bg-blue-400 rounded-full animate-bounce [animation-delay:450ms]" />
+              <span className="w-1 h-3 bg-[#00d2ff] rounded-full animate-bounce [animation-delay:0ms]" />
+              <span className="w-1 h-4 bg-[#00d2ff] rounded-full animate-bounce [animation-delay:150ms]" />
+              <span className="w-1 h-2 bg-[#00d2ff] rounded-full animate-bounce [animation-delay:300ms]" />
+              <span className="w-1 h-5 bg-[#00d2ff] rounded-full animate-bounce [animation-delay:450ms]" />
             </div>
           </div>
         )}
 
-        {/* Status Pill Bottom Right */}
-        <div className="absolute bottom-4 right-4 flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-slate-900/90 border border-slate-800 text-[11px] font-mono text-slate-300 backdrop-blur-md pointer-events-none shadow-lg">
+        {/* Resolution Badge Bottom Right */}
+        <div className="absolute bottom-5 right-5 flex items-center space-x-2 px-3 py-1.5 rounded-full bg-[#141722]/95 border border-[#262a3a] text-[11px] font-mono text-neutral-300 backdrop-blur-md pointer-events-none shadow-lg">
           <div
             className={`w-2 h-2 rounded-full ${
               status === "playing"
-                ? "bg-blue-500 shadow-[0_0_8px_rgba(37,99,235,0.8)]"
+                ? "bg-[#00d2ff] shadow-[0_0_8px_rgba(0,210,255,0.8)]"
                 : status === "paused"
-                ? "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]"
+                ? "bg-[#ffaa00] shadow-[0_0_8px_rgba(255,170,0,0.8)]"
                 : status === "completed"
-                ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"
-                : "bg-slate-500"
+                ? "bg-[#00b875] shadow-[0_0_8px_rgba(0,184,117,0.8)]"
+                : "bg-neutral-500"
             }`}
           />
-          <span className="capitalize font-medium">{status}</span>
+          <span className="capitalize font-semibold">{status}</span>
+          <span className="text-neutral-500">•</span>
+          <span className="text-neutral-400 font-mono text-[10px]">1000×600 VECTOR</span>
         </div>
       </div>
     </div>

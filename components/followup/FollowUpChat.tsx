@@ -31,7 +31,6 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom of chat
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -93,7 +92,6 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
     }
   };
 
-  // Quick prompt chips
   const suggestedQuestions = [
     `Can you provide an intuitive real-world analogy?`,
     currentSegmentHeading
@@ -116,8 +114,8 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
             <div
               className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
                 msg.role === "user"
-                  ? "bg-blue-600 text-white"
-                  : "bg-slate-800 text-blue-400 border border-slate-700"
+                  ? "bg-[#0066ff] text-white"
+                  : "bg-[#141722] text-[#00d2ff] border border-[#262a3a]"
               }`}
             >
               {msg.role === "user" ? (
@@ -130,14 +128,14 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
             <div
               className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 leading-relaxed ${
                 msg.role === "user"
-                  ? "bg-blue-600 text-white rounded-tr-none"
-                  : "bg-slate-950/80 border border-slate-800 text-slate-200 rounded-tl-none whitespace-pre-line"
+                  ? "bg-[#0066ff] text-white rounded-tr-none font-medium"
+                  : "bg-[#0b0d13] border border-[#222533] text-neutral-200 rounded-tl-none whitespace-pre-line"
               }`}
             >
               {msg.content}
               <div
                 className={`text-[9px] mt-1 ${
-                  msg.role === "user" ? "text-blue-200" : "text-slate-500"
+                  msg.role === "user" ? "text-blue-100" : "text-neutral-500"
                 }`}
               >
                 {msg.timestamp}
@@ -147,15 +145,15 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
         ))}
 
         {isLoading && (
-          <div className="flex items-center space-x-2 text-xs text-blue-400 bg-blue-950/40 border border-blue-900/50 p-2.5 rounded-xl w-fit">
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />
-            <span>Formulating Socratic explanation...</span>
+          <div className="flex items-center space-x-2 text-xs text-[#00d2ff] bg-[#0f243c] border border-[#1b3d63] p-2.5 rounded-xl w-fit">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#00d2ff]" />
+            <span>Dr. Maya is formulating a Socratic explanation...</span>
           </div>
         )}
 
         {error && (
-          <div className="flex items-start space-x-2 text-xs text-rose-300 bg-rose-950/40 border border-rose-800/50 p-2.5 rounded-xl">
-            <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+          <div className="flex items-start space-x-2 text-xs text-rose-300 bg-[#2b0d14] border border-[#521926] p-2.5 rounded-xl">
+            <AlertCircle className="w-4 h-4 text-[#ff3355] flex-shrink-0 mt-0.5" />
             <span className="flex-1">{error}</span>
           </div>
         )}
@@ -168,9 +166,9 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
             <button
               key={idx}
               onClick={() => handleSend(q)}
-              className="text-[11px] px-2.5 py-1 rounded-full bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-slate-700 transition-colors flex items-center space-x-1 text-left"
+              className="text-[11px] px-2.5 py-1 rounded-full bg-[#141722] hover:bg-[#1a1d2c] text-neutral-300 border border-[#262a3a] transition-colors flex items-center space-x-1 text-left"
             >
-              <Sparkles className="w-2.5 h-2.5 text-blue-400" />
+              <Sparkles className="w-2.5 h-2.5 text-[#00d2ff]" />
               <span className="truncate max-w-[210px]">{q}</span>
             </button>
           ))}
@@ -183,20 +181,20 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
           e.preventDefault();
           handleSend();
         }}
-        className="pt-2 border-t border-slate-800 flex items-center space-x-2"
+        className="pt-2 border-t border-[#222533] flex items-center space-x-2"
       >
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask tutor a follow-up question..."
+          placeholder="Ask Dr. Maya a follow-up question..."
           disabled={isLoading}
-          className="flex-1 bg-slate-950 border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all disabled:opacity-50"
+          className="flex-1 bg-[#0b0d13] border border-[#262a3a] focus:border-[#0066ff] rounded-xl px-3.5 py-2 text-xs text-neutral-100 placeholder-neutral-500 focus:outline-none focus:ring-1 focus:ring-[#0066ff] transition-all disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={isLoading || !input.trim()}
-          className="p-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40 transition-colors flex items-center justify-center shadow-md shadow-blue-600/30"
+          className="p-2 rounded-xl bg-[#0066ff] hover:bg-[#0052cc] text-white disabled:opacity-40 transition-colors flex items-center justify-center shadow-md shadow-[#0066ff]/40"
         >
           <Send className="w-3.5 h-3.5" />
         </button>

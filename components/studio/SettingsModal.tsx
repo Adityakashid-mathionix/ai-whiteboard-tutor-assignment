@@ -65,16 +65,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-md bg-[#0f172a] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden p-6 text-slate-200">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="w-full max-w-md bg-[#10121a] border border-[#222533] rounded-2xl shadow-2xl overflow-hidden p-6 text-neutral-200">
+        <div className="flex items-center justify-between pb-4 border-b border-[#222533]">
           <div className="flex items-center space-x-2">
-            <Key className="w-5 h-5 text-blue-400" />
+            <Key className="w-5 h-5 text-[#00d2ff]" />
             <h3 className="text-base font-bold text-white">AI Provider Settings</h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-[#1a1d2c] transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -84,14 +84,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           {/* API Key */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-semibold text-slate-300">
+              <label className="text-xs font-semibold text-neutral-300">
                 NVIDIA NIM API Key
               </label>
               <a
                 href="https://build.nvidia.com"
                 target="_blank"
                 rel="noreferrer"
-                className="text-[11px] text-blue-400 hover:underline flex items-center space-x-1"
+                className="text-[11px] text-[#00d2ff] hover:underline flex items-center space-x-1"
               >
                 <span>Get free key</span>
                 <ExternalLink className="w-3 h-3" />
@@ -102,17 +102,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               value={localKey}
               onChange={(e) => setLocalKey(e.target.value)}
               placeholder="nvapi-..."
-              className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+              className="w-full bg-[#0b0d13] border border-[#262a3a] focus:border-[#0066ff] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-[#0066ff] font-mono"
             />
-            <p className="text-[11px] text-slate-400 mt-1.5 flex items-center space-x-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+            <p className="text-[11px] text-neutral-400 mt-1.5 flex items-center space-x-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#00b875] flex-shrink-0" />
               <span>Keys remain server-side and are never exposed in client bundles.</span>
             </p>
           </div>
 
           {/* Model selection */}
           <div>
-            <label className="text-xs font-semibold text-slate-300 block mb-2">
+            <label className="text-xs font-semibold text-neutral-300 block mb-2">
               Inference Model
             </label>
             <div className="space-y-2">
@@ -121,8 +121,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   key={m.id}
                   className={`flex flex-col p-2.5 rounded-xl border text-left cursor-pointer transition-colors ${
                     localModel === m.id
-                      ? "bg-slate-850 border-blue-500/80 text-white"
-                      : "bg-slate-950/60 border-slate-800 hover:bg-slate-850/50 text-slate-400"
+                      ? "bg-[#181c2b] border-[#0066ff] text-white"
+                      : "bg-[#0b0d13] border-[#222533] hover:bg-[#141722] text-neutral-400"
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -133,10 +133,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       value={m.id}
                       checked={localModel === m.id}
                       onChange={() => setLocalModel(m.id)}
-                      className="text-blue-500 focus:ring-blue-500"
+                      className="text-[#0066ff] focus:ring-[#0066ff]"
                     />
                   </div>
-                  <span className="text-[10px] text-slate-400 mt-0.5">{m.desc}</span>
+                  <span className="text-[10px] text-neutral-400 mt-0.5">{m.desc}</span>
                 </label>
               ))}
             </div>
@@ -146,13 +146,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className="pt-2 flex items-center justify-end space-x-2">
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="px-4 py-2 rounded-xl text-xs font-medium text-neutral-400 hover:text-white hover:bg-[#1a1d2c] transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
-              className="px-5 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-colors flex items-center space-x-1.5 shadow-md shadow-blue-600/30"
+              className="px-5 py-2 rounded-xl text-xs font-semibold bg-[#0066ff] hover:bg-[#0052cc] text-white transition-colors flex items-center space-x-1.5 shadow-md shadow-[#0066ff]/40"
             >
               {savedSuccess ? (
                 <>

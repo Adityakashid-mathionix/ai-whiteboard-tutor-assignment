@@ -30,7 +30,6 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [mobileTab, setMobileTab] = useState<"whiteboard" | "outline" | "tutor">("whiteboard");
 
-  // Load saved settings from localStorage
   useEffect(() => {
     try {
       const storedKey = localStorage.getItem("braynix_nvidia_key");
@@ -60,7 +59,7 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
         particleCount: 80,
         spread: 70,
         origin: { y: 0.6 },
-        colors: ["#2563eb", "#0284c7", "#059669", "#d97706"],
+        colors: ["#0066ff", "#00d2ff", "#00b875", "#ffaa00"],
       });
     } catch {}
   };
@@ -70,7 +69,6 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
     onLessonComplete,
   });
 
-  // Keyboard shortcut listeners (Space = Play/Pause, ArrowLeft/Right = Seek, M = Mute)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
@@ -106,29 +104,29 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
   }, [player]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0b0f17] text-slate-100 selection:bg-blue-500/30 selection:text-blue-200">
+    <div className="flex flex-col min-h-screen bg-[#08090d] text-neutral-100 selection:bg-[#0066ff]/30 selection:text-white">
       {/* Studio Top Navigation Bar */}
-      <header className="flex items-center justify-between px-4 sm:px-6 py-3 bg-[#0f172a]/90 border-b border-slate-800 backdrop-blur-xl sticky top-0 z-40">
+      <header className="flex items-center justify-between px-4 sm:px-6 py-3 bg-[#10121a]/95 border-b border-[#222533] backdrop-blur-xl sticky top-0 z-40">
         <div className="flex items-center space-x-3.5">
           <Link
             href="/"
-            className="flex items-center space-x-1.5 text-xs text-slate-400 hover:text-white px-3 py-1.5 rounded-xl hover:bg-slate-800 border border-transparent hover:border-slate-700 transition-all"
+            className="flex items-center space-x-1.5 text-xs text-neutral-400 hover:text-white px-3 py-1.5 rounded-xl hover:bg-[#1a1d2c] border border-transparent hover:border-[#2b3042] transition-all font-medium"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline font-medium">Browse Topics</span>
+            <span className="hidden sm:inline">Browse Topics</span>
           </Link>
 
-          <div className="h-4 w-px bg-slate-800" />
+          <div className="h-4 w-px bg-[#262a3a]" />
 
           <div className="flex items-center space-x-2.5">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center text-white shadow-[0_0_12px_rgba(37,99,235,0.4)]">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-[#0066ff] to-[#00d2ff] flex items-center justify-center text-white shadow-[0_0_12px_rgba(0,102,255,0.4)]">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
               <span className="text-xs font-bold tracking-tight text-white block leading-none">
                 Braynix Studio
               </span>
-              <span className="text-[10px] text-slate-400 font-mono leading-none">
+              <span className="text-[10px] text-neutral-400 font-mono leading-none">
                 Interactive AI Whiteboard
               </span>
             </div>
@@ -136,8 +134,8 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
         </div>
 
         {/* Current Topic Badge */}
-        <div className="hidden md:flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs shadow-inner">
-          <span className="text-blue-300 font-semibold truncate max-w-sm">
+        <div className="hidden md:flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-[#141722] border border-[#222533] text-xs shadow-inner">
+          <span className="text-[#00d2ff] font-semibold truncate max-w-sm">
             {initialLesson.title}
           </span>
         </div>
@@ -145,29 +143,29 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
         {/* Studio Actions */}
         <div className="flex items-center space-x-2">
           {/* Keyboard shortcut hint */}
-          <div className="hidden lg:flex items-center space-x-1 text-[11px] font-mono text-slate-400 bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800">
-            <Command className="w-3 h-3 text-slate-500" />
+          <div className="hidden lg:flex items-center space-x-1 text-[11px] font-mono text-neutral-400 bg-[#141722] px-2.5 py-1 rounded-lg border border-[#222533]">
+            <Command className="w-3 h-3 text-neutral-500" />
             <span>Space: Play/Pause</span>
           </div>
 
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-xs text-slate-300 hover:text-white border border-slate-800 transition-all shadow-sm"
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[#141722] hover:bg-[#1a1d2c] text-xs text-neutral-300 hover:text-white border border-[#222533] transition-all shadow-sm"
           >
-            <Settings className="w-3.5 h-3.5 text-blue-400" />
+            <Settings className="w-3.5 h-3.5 text-[#00d2ff]" />
             <span className="hidden sm:inline font-medium">Settings</span>
           </button>
         </div>
       </header>
 
       {/* Mobile Tab Navigation */}
-      <div className="lg:hidden flex border-b border-slate-800 bg-[#0f172a] px-4 py-2 space-x-2">
+      <div className="lg:hidden flex border-b border-[#222533] bg-[#10121a] px-4 py-2 space-x-2">
         <button
           onClick={() => setMobileTab("whiteboard")}
           className={`flex-1 py-1.5 rounded-lg text-xs font-medium flex items-center justify-center space-x-1.5 transition-colors ${
             mobileTab === "whiteboard"
-              ? "bg-blue-600 text-white"
-              : "text-slate-400 hover:text-white"
+              ? "bg-[#0066ff] text-white"
+              : "text-neutral-400 hover:text-white"
           }`}
         >
           <Monitor className="w-3.5 h-3.5" />
@@ -177,8 +175,8 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
           onClick={() => setMobileTab("outline")}
           className={`flex-1 py-1.5 rounded-lg text-xs font-medium flex items-center justify-center space-x-1.5 transition-colors ${
             mobileTab === "outline"
-              ? "bg-blue-600 text-white"
-              : "text-slate-400 hover:text-white"
+              ? "bg-[#0066ff] text-white"
+              : "text-neutral-400 hover:text-white"
           }`}
         >
           <Layers className="w-3.5 h-3.5" />
@@ -188,8 +186,8 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
           onClick={() => setMobileTab("tutor")}
           className={`flex-1 py-1.5 rounded-lg text-xs font-medium flex items-center justify-center space-x-1.5 transition-colors ${
             mobileTab === "tutor"
-              ? "bg-blue-600 text-white"
-              : "text-slate-400 hover:text-white"
+              ? "bg-[#0066ff] text-white"
+              : "text-neutral-400 hover:text-white"
           }`}
         >
           <GraduationCap className="w-3.5 h-3.5" />
