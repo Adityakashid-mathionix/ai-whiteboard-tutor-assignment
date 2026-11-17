@@ -81,15 +81,9 @@ describe("normalizeLessonJson", () => {
     expect((heading as { textAnchor?: string }).textAnchor).toBe("middle");
   });
 
-  it("carries level and language onto the lesson", () => {
-    const lesson = normalizeLessonJson(LESSON, {
-      topic: "testing",
-      level: "advanced",
-      language: "hi",
-    });
-
+  it("carries the requested depth onto the lesson", () => {
+    const lesson = normalizeLessonJson(LESSON, { topic: "testing", level: "advanced" });
     expect(lesson.learningLevel).toBe("advanced");
-    expect(lesson.language).toBe("hi");
   });
 });
 
@@ -125,10 +119,10 @@ describe("text fitting", () => {
 describe("lesson cache", () => {
   beforeEach(() => globalLessonCache.clear());
 
-  it("separates entries by model, level and language", () => {
-    const a = globalLessonCache.buildKey({ topic: "Rabies", level: "beginner", language: "en" });
-    const b = globalLessonCache.buildKey({ topic: "Rabies", level: "advanced", language: "en" });
-    const c = globalLessonCache.buildKey({ topic: "What is rabies?", level: "beginner", language: "en" });
+  it("separates entries by model and level", () => {
+    const a = globalLessonCache.buildKey({ topic: "Rabies", level: "beginner" });
+    const b = globalLessonCache.buildKey({ topic: "Rabies", level: "advanced" });
+    const c = globalLessonCache.buildKey({ topic: "What is rabies?", level: "beginner" });
 
     expect(a).not.toBe(b);
     expect(a).toBe(c); // same question, normalised

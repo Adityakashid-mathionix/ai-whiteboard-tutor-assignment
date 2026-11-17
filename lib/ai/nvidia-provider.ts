@@ -140,7 +140,6 @@ export class NvidiaNIMProvider implements AIProvider {
       topic,
       model: this.getModel(options),
       level: options?.level,
-      language: options?.language,
     };
 
     return globalLessonCache.getOrGenerate(keyParts, async () => {
@@ -166,7 +165,6 @@ export class NvidiaNIMProvider implements AIProvider {
             lesson: createSynthesizedLesson(topic, {
               visualAssets,
               level: options?.level,
-              language: options?.language,
             }),
             source: "fallback",
           };
@@ -197,7 +195,6 @@ export class NvidiaNIMProvider implements AIProvider {
             role: "system",
             content: buildLessonSystemPrompt({
               level: options?.level,
-              language: options?.language,
             }),
           },
           {
@@ -230,7 +227,6 @@ export class NvidiaNIMProvider implements AIProvider {
       topic,
       visualAssets,
       level: options?.level,
-      language: options?.language,
     });
 
     const result = LessonSchema.safeParse(normalized);
@@ -272,7 +268,6 @@ export class NvidiaNIMProvider implements AIProvider {
         role: "system" as const,
         content: `${buildFollowupSystemPrompt({
           level: lesson.learningLevel,
-          language: lesson.language,
         })}\n\n[LESSON CONTEXT]\n${lessonSummary}`,
       },
       ...history.slice(-6).map((turn) => ({

@@ -6,7 +6,7 @@ import {
   formatZodError,
   toLessonDigest,
 } from "@/lib/schemas/api-schema";
-import { checkRateLimit, clientKey, rateLimitHeaders } from "@/lib/rate-limit";
+import { checkRateLimit, clientKey, rateLimitHeaders, readJsonBody } from "@/lib/rate-limit";
 
 export const maxDuration = 45;
 
@@ -15,15 +15,15 @@ const OWN_KEY_RULE = { limit: 60, windowMs: 60_000 };
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => null);
-    if (!body || typeof body !== "object") {
+    const body = await readJsonBody(req);
+    if (!body.ok) {
       return NextResponse.json(
-        { success: false, error: "Request body must be valid JSON." },
-        { status: 400 }
+        { success: false, error: body.error },
+        { status: body.status }
       );
     }
 
-    const raw = body as Record<string, unknown>;
+    const raw = body.data as Record<string, unknown>;
 
     // Accept either a compact digest or a full lesson object, and reduce the
     // latter server-side so visualActions never influence the prompt.

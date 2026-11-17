@@ -3,7 +3,7 @@ import { ZodError } from "zod";
 import { defaultAIProvider } from "@/lib/ai/nvidia-provider";
 import { AIProviderError, httpStatusForError } from "@/lib/ai/errors";
 import { GenerateLessonRequestSchema, formatZodError } from "@/lib/schemas/api-schema";
-import { checkRateLimit, clientKey, rateLimitHeaders } from "@/lib/rate-limit";
+import { checkRateLimit, clientKey, rateLimitHeaders, readJsonBody } from "@/lib/rate-limit";
 
 export const maxDuration = 60; // Allow up to 60s for LLM generation
 
@@ -13,15 +13,15 @@ const OWN_KEY_RULE = { limit: 40, windowMs: 60_000 };
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => null);
-    if (!body || typeof body !== "object") {
+    const body = await readJsonBody(req);
+    if (!body.ok) {
       return NextResponse.json(
-        { success: false, error: "Request body must be valid JSON." },
-        { status: 400 }
+        { success: false, error: body.error },
+        { status: body.status }
       );
     }
 
-    const parsed = GenerateLessonRequestSchema.safeParse(body);
+    const parsed = GenerateLessonRequestSchema.safeParse(body.data);
     if (!parsed.success) {
       return NextResponse.json(
         { success: false, error: formatZodError(parsed.error) },
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { topic, level, language, model } = parsed.data;
+    const { topic, level, model } = parsed.data;
 
     // Priority: custom header -> body -> server environment variable.
     const headerApiKey = req.headers.get("x-nvidia-api-key")?.trim();
@@ -55,7 +55,6 @@ export async function POST(req: NextRequest) {
       apiKey: activeApiKey,
       model,
       level,
-      language,
     });
     const durationMs = Date.now() - startTime;
 

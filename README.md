@@ -1,146 +1,207 @@
-# Braynix Studios — AI-Powered Interactive Whiteboard Tutor
+# AI Whiteboard Tutor
 
-> **Official Technical Assignment Submission for Braynix Studios**  
-> An autonomous AI learning platform that explains any educational or technical concept through synchronized voice narration, real-time SVG whiteboard animations, and interactive follow-up Q&A.
+An AI tutor that **explains a topic out loud while drawing it**. You type a subject, it
+plans a 4–6 chapter lesson, speaks each chapter in a teacher's voice, and builds the
+diagram that actually fits that explanation on a 1000 × 600 vector board you can
+annotate, pause and question.
 
----
-
-## 🌟 Executive Summary & Product Vision
-
-Traditional online education typically oscillates between two extremes: static video lectures (passive, non-interactive, fixed pace) and text-only chatbot interfaces (lacking spatial hierarchy, visual intuition, and spoken flow).
-
-The **Braynix Studios AI Interactive Whiteboard Tutor** re-imagines digital tutoring. When a learner requests any topic:
-1. **AI Lesson Architecture**: NVIDIA NIM decomposes the concept into a progressive 4–6 segment masterclass (~120 seconds).
-2. **Generative SVG Whiteboard**: The tutor dynamically plans visual vectors—shapes, system flows, arrows, and highlight regions within a normalized $1000 \times 600$ viewport.
-3. **Synchronized Voice Narration**: Powered by the browser-native Web Speech API (`SpeechSynthesisUtterance`), the tutor narrates each segment while drawing the corresponding whiteboard elements in real time.
-4. **Interactive Playback Controls**: Full transport deck enabling Play, Pause, Resume, Chapter Seeking, Restart, and Speed Multipliers ($0.75\times, 1.0\times, 1.25\times, 1.5\times$).
-5. **Contextual Socratic Follow-Up**: Students can ask questions at any point. The AI receives the original topic, segment transcripts, and conversation history to deliver crystal-clear explanations.
+Built for the Braynix Studios technical assignment.
 
 ---
 
-## 🛠️ Architecture & Technology Stack
+## What makes it different
+
+Most "AI explains things" demos produce a wall of text, or the same generic two-box
+diagram for every subject. The two hard problems here were **making the narration sound
+like a person teaching** and **making the board mean something for an arbitrary topic**.
+
+| | How it is handled |
+|---|---|
+| **Narration** | The prompt enforces spoken-language rules: short sentences, an everyday analogy before any abstraction, real names, numbers and dates, explicit signposting, and a closing line worth repeating. Vague filler ("plays a crucial role") is banned outright. |
+| **The board** | The model never places pixels. It sends a compact *diagram brief* — what kind of picture and which labels — and a deterministic layout engine renders it. Legibility is guaranteed; the model still decides the content. |
+| **Unknown topics** | If a brief is missing or thin, the engine reads the narration itself and infers the diagram: ordered steps, named parts, contrasted pairs, dated milestones, measured quantities, key terms. |
+| **Honesty** | When the model is unreachable, the studio shows a labelled placeholder outline and says so. It never dresses a template up as a generated lesson. |
+
+### The seven diagram archetypes
+
+`topic-analysis.ts` scores the narration against each shape and picks the one the text
+actually supports, with `concept` as the floor so a weak signal never fakes structure.
+
+| Archetype | Chosen when the explanation… | Rendered as |
+|---|---|---|
+| `process` | moves through ordered stages | numbered boxes, left to right, with arrows |
+| `cycle` | returns to where it started | stages around a ring |
+| `comparison` | sets two things against each other | two labelled columns and a bridge arrow |
+| `parts` | breaks a whole into named components | hub with branches |
+| `timeline` | is dated | milestones on an axis |
+| `quantity` | compares measured values | bar chart with real figures and units |
+| `concept` | defines an idea | the definition, written out, plus the terms to keep |
+
+So "how bridges stay up" gets *Truck pushes down on the deck → Deck spreads the load
+sideways → Supports push into the ground → Ground pushes back up*, while "evolution of the
+laptop" gets a dated axis. Neither gets "Component A".
+
+---
+
+## Architecture
 
 ```
-                              ┌──────────────────────────────────┐
-                              │       Student / Web Client       │
-                              │  (Next.js App Router, Tailwind)  │
-                              └─────────────────┬────────────────┘
-                                                │
-                     ┌──────────────────────────┴──────────────────────────┐
-                     ▼                                                     ▼
-        ┌─────────────────────────┐                           ┌─────────────────────────┐
-        │   Interactive Studio    │                           │  Next.js Route Handlers │
-        │  - SVG Vector Engine    │                           │  - /api/generate-lesson │
-        │  - SpeechSynthesis Sync │                           │  - /api/ask-question    │
-        │  - Framer Motion Paths  │                           └────────────┬────────────┘
-        │  - Transport Scrubber   │                                        │
-        └─────────────────────────┘                                        ▼
-                                                              ┌─────────────────────────┐
-                                                              │  AI Provider Abstraction│
-                                                              │  (lib/ai/provider.ts)   │
-                                                              └────────────┬────────────┘
-                                                                           │
-                                                                           ▼
-                                                              ┌─────────────────────────┐
-                                                              │       NVIDIA NIM        │
-                                                              │  (Hosted Inference API) │
-                                                              │  Nemotron 3.5 Lightning │
-                                                              └─────────────────────────┘
+Browser (Next.js App Router, React 18, Tailwind)
+│
+├── useLessonPlayer ── useSpeech        Web Speech API: voice choice, pause/resume
+│                   └─ useWhiteboard    cumulative board state per chapter
+│
+├── Whiteboard.tsx                      SVG surface, pointer tools, progressive reveal
+│
+└── fetch → /api/generate-lesson  ─┐
+          /api/ask-question        │   Zod validation · body cap · rate limit
+                                   ▼
+                            NvidiaNIMProvider
+                                   │
+          ┌────────────────────────┼────────────────────────┐
+          ▼                        ▼                        ▼
+    lesson-cache            circuit-breaker            NVIDIA NIM
+    TTL + LRU + dedupe      fatal vs transient         Nemotron 3.5
+          │
+          ▼
+    normalize-lesson → layout engine (topic-analysis → diagrams → segment-layout)
 ```
 
-- **Frontend**: Next.js 14 (App Router), React 18, TypeScript (Strict Mode), Tailwind CSS.
-- **Animations & Microinteractions**: Framer Motion (SVG `pathLength`, opacity, scaling), Canvas Confetti.
-- **Whiteboard Engine**: Custom SVG action renderer with strict discriminated union types (`addText`, `drawLine`, `drawCircle`, `drawRect`, `drawPath`, `drawArrow`, `highlight`, `addLabel`, `erase`, `clear`).
-- **Voice Engine**: Browser-native Web Speech API (`SpeechSynthesisUtterance`) with event tracking (`onstart`, `onend`, `onpause`, `onresume`, `onerror`), fallback timer simulation when muted.
-- **AI Core**: NVIDIA NIM hosted inference (`nvidia/nemotron-3.5-lightning-30b-a3b`) with clean provider abstraction (`lib/ai/provider.ts`) and Zod schema validation.
-- **Deployment**: Vercel Serverless.
+**Module map**
+
+| Path | Responsibility |
+|---|---|
+| `lib/ai/prompts.ts` | Prompt construction per depth level |
+| `lib/ai/nvidia-provider.ts` | One `chat()` helper owning timeouts and typed errors |
+| `lib/ai/normalize-lesson.ts` | Coerces loose model JSON into schema-valid actions |
+| `lib/ai/extract-json.ts` | Pulls JSON out of fenced/prose replies, repairs truncation |
+| `lib/ai/errors.ts` | `AIProviderError`, fatal vs transient classification |
+| `lib/whiteboard/layout/topic-analysis.ts` | Reads narration, picks the archetype |
+| `lib/whiteboard/layout/diagrams.ts` | Draws each archetype |
+| `lib/whiteboard/layout/segment-layout.ts` | Composes title, diagram, notes, takeaway |
+| `lib/whiteboard/safe-url.ts` | Media allowlist and SVG path grammar |
+| `lib/cache/lesson-cache.ts` | TTL + LRU cache with request deduplication |
+| `lib/rate-limit.ts` | Fixed-window limiter and request body cap |
 
 ---
 
-## 🎨 Visual & UX Craftsmanship
+## Engineering decisions worth calling out
 
-The interface is designed with a **Linear & Apple** aesthetic:
-- **Obsidian Dark Foundation**: Deep graphite `#060911` palette with micro-dot matrix grid and coordinate guides.
-- **Controlled SVG Primitives**: No raw innerHTML or dangerous script injection. Every element is typed and validated through Zod.
-- **Live Laser Pointer & Visualizer**: An active laser pointer tracks the element currently being explained, alongside an audio oscilloscope wave.
-- **Ergonomic Transport Deck**: Centralized tactile transport controls with chapter scrubber, speed pills, and global keyboard shortcuts (`Space` to toggle playback, `←` / `→` to navigate chapters, `M` to mute).
+**The model describes, the engine draws.** Asking a language model for 14 absolute SVG
+coordinates per chapter produced overlapping shapes, off-canvas elements and replies long
+enough to hit the token ceiling mid-JSON. Moving to a compact brief made generations
+shorter, faster and far more reliable, and made every board legible by construction. The
+model's own layout is still accepted — but only after passing a bounds and overlap check.
+
+**Failures are classified, not swallowed.** A missing API key is a configuration problem
+the user must see; a 502 from upstream is worth absorbing. `AIProviderError` separates the
+two: fatal errors are rethrown as 401/429 and never trip the circuit breaker, transient
+ones fall back to a clearly-labelled outline that is **never written to the cache** — one
+blip should not pin a placeholder to a topic for 24 hours.
+
+**The cache key is the whole question.** Topic, model and depth level, with the topic
+normalised so "What is rabies?" and "rabies" share an entry while beginner and advanced do
+not. In-flight deduplication means ten simultaneous requests for one topic cost one
+generation.
+
+**Truncation degrades gracefully.** A cut-off reply is repaired by closing its open
+structures, so a long lesson loses its final chapter instead of failing entirely.
+
+**Photographs are opt-in, not automatic.** Live image search returns off-topic results for
+arbitrary subjects (a jet-engine lesson was illustrated with soldiers around a workbench).
+Only hand-verified assets reach the board; everything else is taught with a drawn diagram,
+which is always on-topic.
 
 ---
 
-## 🧪 Verified Topics (Comprehensive Test Suite)
+## Security
 
-The application has been verified end-to-end with the 5 required curriculum subjects:
+Model output is untrusted input, and the app is deployed without authentication, so both
+are treated accordingly.
 
-| Subject | Topic | Whiteboard Visual Demonstration | Verification Status |
-| :--- | :--- | :--- | :---: |
-| **1. Biology** | *How the Human Heart Works* | Dual pump, 4 chambers (atria/ventricles), pulmonary/systemic loops, ECG waveform | ✅ Verified |
-| **2. Plant Biology** | *Photosynthesis* | Chloroplast organelle, sunlight photons, root water (H2O), stomatal CO2, glucose/O2 equation | ✅ Verified |
-| **3. Physics** | *Newton's Third Law* | Matched action-reaction force vectors, formula $F_{AB} = -F_{BA}$, rocket propulsion | ✅ Verified |
-| **4. Mobile Systems** | *React Native Architecture* | JS thread, Native main thread, C++ JSI bridge, Fabric concurrent renderer, TurboModules | ✅ Verified |
-| **5. Software Engineering** | *How an API Works* | Client app, cloud server & database, HTTP GET request arrow, JSON response payload | ✅ Verified |
+- **Media allowlist.** `drawImage` URLs are model-authored. Only `https` URLs on
+  allowlisted Wikimedia hosts render — blocking `javascript:`, `data:`, `blob:`, plain
+  `http`, credentialed URLs, look-alike hosts (`upload.wikimedia.org.evil.com`) and
+  arbitrary tracking pixels. Enforced in the normaliser *and* again in the renderer.
+- **SVG path grammar.** Path data reaches the DOM verbatim, so it is restricted to the
+  characters a path can legitimately contain; anything else becomes `M 0 0`.
+- **Board text** is React-escaped and additionally stripped of angle brackets, and every
+  coordinate is clamped onto the canvas.
+- **Content Security Policy** plus `X-Frame-Options: DENY`, `nosniff`,
+  `Referrer-Policy`, a `Permissions-Policy` denying camera/microphone/geolocation, HSTS
+  and COOP. `connect-src 'self'`: the browser never talks to the model provider directly.
+- **Input validation.** Zod schemas on both routes, a model-id allowlist pattern, and a
+  128 KB body cap checked before parsing.
+- **Rate limiting.** Fixed-window per IP — 8 lessons/min on the deployment's shared key,
+  40 for callers spending their own. (Swap the in-memory store for Redis to make this
+  hold across instances.)
+- **Keys.** A user key lives in their own browser and is sent only to this app's API
+  route; it is never logged, and never written into a lesson or cache entry.
 
 ---
 
-## ⚙️ Environment Variables & Setup
-
-### 1. Prerequisites
-- Node.js 18+ (tested on Node.js v22)
-- npm 9+
-
-### 2. Environment Configuration
-Create a `.env.local` file in the project root (see `.env.example`):
+## Running it
 
 ```bash
-# NVIDIA NIM API Key (Obtain free 1000 credits from https://build.nvidia.com)
-NVIDIA_API_KEY=nvapi-your-key-here
-
-# Selected High-Speed Reasoning Model
-NVIDIA_MODEL=nvidia/nemotron-3.5-lightning-30b-a3b
-
-# Base Endpoint for NVIDIA NIM
-NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
-```
-
-> **Client Key Override**: Users and reviewers can also enter or test their own NVIDIA API key directly in the Studio via the **Settings** modal. Keys are transmitted only via secure server request headers and are never exposed in frontend bundles.
-
-### 3. Installation & Local Development
-
-```bash
-# Install dependencies
 npm install
-
-# Run development server
+cp .env.example .env.local   # add NVIDIA_API_KEY, or add one in Studio settings later
 npm run dev
-
-# Or build and launch production server
-npm run build
-npm run start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the application.
-
----
-
-## 🚀 Public Deployment Guide (Vercel)
-
-To deploy to Vercel:
+Open <http://localhost:3000>. The pre-built masterclasses on the home page run with no key
+at all.
 
 ```bash
-# Deploy with Vercel CLI
-vercel --prod
+npm test          # 39 unit tests
+npm run lint
+npx tsc --noEmit
+npm run build
 ```
 
-Configure `NVIDIA_API_KEY` and `NVIDIA_MODEL` in your Vercel Project Settings under **Environment Variables**.
+CI runs all four on every push and pull request.
+
+### Environment
+
+| Variable | Required | Default |
+|---|---|---|
+| `NVIDIA_API_KEY` | for live generation | — |
+| `NVIDIA_MODEL` | no | `nvidia/nemotron-3.5-lightning-30b-a3b` |
+| `NVIDIA_BASE_URL` | no | `https://integrate.api.nvidia.com/v1` |
 
 ---
 
-## 🛡️ Security & Performance Guarantees
+## Using the studio
 
-- **Server-Side Secret Isolation**: `NVIDIA_API_KEY` is strictly confined to Next.js route handlers (`/api/*`).
-- **No Unsafe HTML / SVG**: AI-generated responses are validated against `LessonSchema` using Zod before any node renders.
-- **Zero-Mock Commitment**: Live requests interact with real inference endpoints; exemplary masterclasses serve as verified curriculum benchmarks.
-- **Graceful Error Recovery**: Network timeouts, missing keys, or rate limits display actionable UI notices with instant exemplar fallbacks.
+| Control | |
+|---|---|
+| `Space` | play / pause |
+| `←` `→` | previous / next chapter |
+| `M` | mute (the board still advances on a timer) |
+| Tools | inspect, pan, pen, highlighter, eraser, undo — mouse, pen and touch |
+| Settings | pick the narration voice (with preview), model, and your own API key |
+
+Click any element on the board to see what it represents. Pausing stops at the word being
+spoken and resuming continues from there, not from the top of the chapter.
 
 ---
 
-*Crafted with precision for the Braynix Studios Technical Assignment — November 2026.*
+## Testing
+
+39 unit tests cover the parts most likely to break quietly rather than loudly:
+
+- JSON extraction from fenced, prose-wrapped and truncated model replies
+- Lesson normalisation, board bounds, heading centring and action coercion
+- Archetype selection for process, cycle, timeline, comparison and concept chapters
+- Text fitting and wrapping against measured widths
+- Cache key separation, and the rule that fallbacks are never cached
+- Fatal-vs-transient error handling in the circuit breaker
+- The rate limiter
+- Security: media allowlist bypasses, hostile SVG paths, text sanitisation, coordinate
+  clamping
+
+---
+
+## Stack
+
+Next.js 14 (App Router) · React 18 · TypeScript (strict) · Tailwind CSS · Zod ·
+Framer Motion · Web Speech API · NVIDIA NIM (Nemotron 3.5) · Vitest

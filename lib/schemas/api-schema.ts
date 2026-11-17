@@ -1,14 +1,4 @@
 import { z } from "zod";
-import { SUPPORTED_LANGUAGES } from "@/lib/languages";
-
-const languageCodes = SUPPORTED_LANGUAGES.map((l) => l.code);
-
-export const LanguageCodeSchema = z
-  .string()
-  .transform((value) => value.toLowerCase().trim())
-  .refine((value) => languageCodes.includes(value), {
-    message: "Unsupported language code.",
-  });
 
 export const LearningLevelSchema = z.enum(["beginner", "intermediate", "advanced"]);
 
@@ -29,7 +19,6 @@ export const GenerateLessonRequestSchema = z.object({
     .min(2, "Please provide a valid educational topic.")
     .max(300, "Topic title must be under 300 characters."),
   level: LearningLevelSchema.optional().default("beginner"),
-  language: LanguageCodeSchema.optional().default("en"),
   model: ModelIdSchema.optional(),
   apiKey: ApiKeySchema.optional(),
 });
@@ -47,7 +36,6 @@ export const LessonDigestSchema = z.object({
   title: z.string().trim().min(1).max(300),
   summary: z.string().trim().max(2000).optional().default(""),
   topic: z.string().trim().max(300).optional(),
-  language: LanguageCodeSchema.optional().default("en"),
   learningLevel: LearningLevelSchema.optional().default("beginner"),
   segments: z
     .array(
@@ -83,7 +71,6 @@ export function toLessonDigest(lesson: {
   title?: string;
   summary?: string;
   topic?: string;
-  language?: string;
   learningLevel?: string;
   segments?: { heading?: string; narration?: string; keyTakeaway?: string }[];
 }): LessonDigest {
@@ -91,7 +78,6 @@ export function toLessonDigest(lesson: {
     title: lesson.title || lesson.topic || "Lesson",
     summary: lesson.summary || "",
     topic: lesson.topic,
-    language: lesson.language || "en",
     learningLevel: lesson.learningLevel || "beginner",
     segments: (lesson.segments || []).slice(0, 12).map((segment) => ({
       heading: segment.heading || "Chapter",

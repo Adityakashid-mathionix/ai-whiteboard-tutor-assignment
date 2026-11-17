@@ -2,6 +2,7 @@ import { Lesson, WhiteboardAction } from "@/lib/schemas/lesson-schema";
 import { EducationalVisualAsset } from "@/lib/visuals/visual-attribution";
 import { composeSegmentLayout } from "@/lib/whiteboard/layout/segment-layout";
 import { fitText } from "@/lib/whiteboard/layout/text-utils";
+import { isAllowedImageUrl, safePathData } from "@/lib/whiteboard/safe-url";
 
 type RawRecord = Record<string, unknown>;
 
@@ -9,7 +10,6 @@ export interface NormalizeOptions {
   topic: string;
   visualAssets?: EducationalVisualAsset[];
   level?: string;
-  language?: string;
 }
 
 const VALID_ACTION_TYPES = new Set([
@@ -198,8 +198,8 @@ export function coerceAction(
       };
 
     case "drawPath": {
-      const path = str(raw.path || raw.d);
-      if (path.length < 2) return null;
+      const path = safePathData(str(raw.path || raw.d));
+      if (path === "M 0 0") return null;
       return {
         type: "drawPath",
         id,
@@ -226,8 +226,9 @@ export function coerceAction(
       };
 
     case "drawImage": {
+      // Untrusted model output: only allowlisted https media hosts render.
       const url = str(raw.url);
-      if (!/^https?:\/\//i.test(url)) return null;
+      if (!isAllowedImageUrl(url)) return null;
       return {
         type: "drawImage",
         id,
@@ -390,7 +391,7 @@ function normalizeSegment(
  */
 export function normalizeLessonJson(raw: unknown, options: NormalizeOptions): Lesson {
   const root: RawRecord = isRecord(raw) ? raw : {};
-  const { topic, visualAssets = [], level, language } = options;
+  const { topic, visualAssets = [], level } = options;
 
   const rawSegments = Array.isArray(root.segments)
     ? root.segments
@@ -417,7 +418,6 @@ export function normalizeLessonJson(raw: unknown, options: NormalizeOptions): Le
       str(root.overview) ||
       str(root.description) ||
       `Educational masterclass explaining ${topic}.`,
-    language: language || str(root.language) || "en",
     learningLevel: level || str(root.learningLevel) || "beginner",
     estimatedDuration: Math.min(300, Math.max(30, duration)),
     keyTakeaways,

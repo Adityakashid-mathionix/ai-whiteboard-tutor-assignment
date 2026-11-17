@@ -3,6 +3,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { WhiteboardAction } from "@/lib/schemas/lesson-schema";
+import { isAllowedImageUrl } from "./safe-url";
 
 interface WhiteboardActionRendererProps {
   action: WhiteboardAction;
@@ -38,6 +39,10 @@ export const WhiteboardActionRenderer: React.FC<WhiteboardActionRendererProps> =
 
   switch (action.type) {
     case "drawImage": {
+      // Defence in depth: the normaliser already filters these, but the
+      // renderer also refuses anything outside the media allowlist.
+      if (!isAllowedImageUrl(action.url)) return null;
+
       return (
         <motion.g
           key={action.id}

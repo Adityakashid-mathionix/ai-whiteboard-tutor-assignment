@@ -97,3 +97,42 @@ export function resetRateLimits(): void {
   buckets.clear();
   lastSweep = 0;
 }
+
+/** Largest request body either API route will read, in bytes. */
+export const MAX_BODY_BYTES = 128 * 1024;
+
+/**
+ * Reads and parses a JSON body, refusing anything oversized.
+ *
+ * Without this, a single multi-megabyte POST is parsed in full before Zod ever
+ * sees it, which is free memory pressure for an unauthenticated caller.
+ */
+export async function readJsonBody(
+  req: NextRequest
+): Promise<{ ok: true; data: unknown } | { ok: false; error: string; status: number }> {
+  const declared = Number(req.headers.get("content-length") || 0);
+  if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) {
+    return { ok: false, error: "Request body is too large.", status: 413 };
+  }
+
+  let text: string;
+  try {
+    text = await req.text();
+  } catch {
+    return { ok: false, error: "Could not read the request body.", status: 400 };
+  }
+
+  if (text.length > MAX_BODY_BYTES) {
+    return { ok: false, error: "Request body is too large.", status: 413 };
+  }
+
+  try {
+    const data = JSON.parse(text);
+    if (!data || typeof data !== "object") {
+      return { ok: false, error: "Request body must be a JSON object.", status: 400 };
+    }
+    return { ok: true, data };
+  } catch {
+    return { ok: false, error: "Request body must be valid JSON.", status: 400 };
+  }
+}
