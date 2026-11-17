@@ -1,5 +1,20 @@
 import { Lesson } from "@/types/lesson";
 
+export type LessonSource = "ai" | "fallback" | "cache" | "exemplar";
+
+export interface GeneratedLesson {
+  lesson: Lesson;
+  /** Where the lesson actually came from. Only "ai" results are cacheable. */
+  source: LessonSource;
+}
+
+export interface LessonCacheKeyParts {
+  topic: string;
+  model?: string;
+  level?: string;
+  language?: string;
+}
+
 interface CacheEntry {
   lesson: Lesson;
   createdAt: number;
@@ -8,21 +23,26 @@ interface CacheEntry {
 }
 
 /**
- * High-performance In-Memory TTL Cache with Request Deduplication
- * Designed for serverless Next.js edge and node environments.
- * Reduces NVIDIA NIM API costs by up to 90% by serving identical or semantically
- * similar topics instantly with zero token consumption and <10ms response time.
+ * In-memory TTL + LRU cache with request deduplication.
+ *
+ * Reduces NVIDIA NIM API cost by serving identical requests instantly. The key
+ * covers the model, learning level and language as well as the topic, so two
+ * users asking for the same topic at different depths (or with a different
+ * model selected) never receive each other's lesson.
+ *
+ * Only genuinely AI-generated lessons are stored. Fallback lessons are never
+ * cached, otherwise a single transient upstream failure would pin a generic
+ * template lesson to that topic for the whole TTL.
  */
 class LessonCache {
   private cache = new Map<string, CacheEntry>();
-  private inFlightRequests = new Map<string, Promise<Lesson>>();
+  private inFlightRequests = new Map<string, Promise<GeneratedLesson>>();
   private readonly defaultTTL = 1000 * 60 * 60 * 24; // 24 hours
   private readonly maxEntries = 500;
 
   /**
-   * Normalizes a topic string into a deterministic canonical cache key
+   * Normalizes a topic string into a deterministic canonical form.
    * E.g. "What is Rabies?" -> "rabies"
-   * E.g. "how does the human heart work" -> "human heart"
    */
   public normalizeTopicKey(topic: string): string {
     return topic
@@ -34,29 +54,41 @@ class LessonCache {
       .trim();
   }
 
-  public get(topic: string): Lesson | null {
-    const key = this.normalizeTopicKey(topic);
+  /** Full cache key: topic + model + level + language. */
+  public buildKey(parts: LessonCacheKeyParts): string {
+    return [
+      this.normalizeTopicKey(parts.topic),
+      (parts.model || "default").toLowerCase(),
+      (parts.level || "beginner").toLowerCase(),
+      (parts.language || "en").toLowerCase(),
+    ].join("::");
+  }
+
+  public get(parts: LessonCacheKeyParts): Lesson | null {
+    const key = this.buildKey(parts);
     const entry = this.cache.get(key);
 
     if (!entry) return null;
 
-    // Check expiration
     if (Date.now() > entry.expiresAt) {
       this.cache.delete(key);
       return null;
     }
 
     entry.hits += 1;
+    // Re-insert so Map iteration order reflects true recency of use.
+    this.cache.delete(key);
+    this.cache.set(key, entry);
     return entry.lesson;
   }
 
-  public set(topic: string, lesson: Lesson, ttlMs: number = this.defaultTTL): void {
-    const key = this.normalizeTopicKey(topic);
+  public set(parts: LessonCacheKeyParts, lesson: Lesson, ttlMs: number = this.defaultTTL): void {
+    const key = this.buildKey(parts);
 
-    // Evict oldest entry if size limit reached (LRU style)
-    if (this.cache.size >= this.maxEntries) {
-      const oldestKey = this.cache.keys().next().value;
-      if (oldestKey) this.cache.delete(oldestKey);
+    // Evict least-recently-used entry once the size limit is reached.
+    if (!this.cache.has(key) && this.cache.size >= this.maxEntries) {
+      const lruKey = this.cache.keys().next().value;
+      if (lruKey) this.cache.delete(lruKey);
     }
 
     this.cache.set(key, {
@@ -68,43 +100,42 @@ class LessonCache {
   }
 
   /**
-   * Request Deduplication:
-   * If an identical topic generation is already in-flight, return the existing
-   * promise instead of firing a second expensive concurrent LLM call.
+   * Cache-aside read-through with request deduplication: if an identical
+   * request is already in flight, the existing promise is awaited instead of
+   * firing a second expensive concurrent LLM call.
    */
   public async getOrGenerate(
-    topic: string,
-    generator: () => Promise<Lesson>
-  ): Promise<{ lesson: Lesson; cached: boolean }> {
-    const key = this.normalizeTopicKey(topic);
+    parts: LessonCacheKeyParts,
+    generator: () => Promise<GeneratedLesson>
+  ): Promise<GeneratedLesson> {
+    const key = this.buildKey(parts);
 
-    // 1. Check memory cache
-    const existing = this.get(topic);
+    const existing = this.get(parts);
     if (existing) {
-      return { lesson: existing, cached: true };
+      return { lesson: existing, source: "cache" };
     }
 
-    // 2. Check if identical request is currently executing
     const pending = this.inFlightRequests.get(key);
     if (pending) {
-      const lesson = await pending;
-      return { lesson, cached: true };
+      const result = await pending;
+      return { lesson: result.lesson, source: result.source };
     }
 
-    // 3. Execute generator with deduplication lock
     const requestPromise = (async () => {
       try {
-        const lesson = await generator();
-        this.set(topic, lesson);
-        return lesson;
+        const result = await generator();
+        // Never cache fallback output — it would outlive the outage.
+        if (result.source === "ai") {
+          this.set(parts, result.lesson);
+        }
+        return result;
       } finally {
         this.inFlightRequests.delete(key);
       }
     })();
 
     this.inFlightRequests.set(key, requestPromise);
-    const lesson = await requestPromise;
-    return { lesson, cached: false };
+    return requestPromise;
   }
 
   public getStats() {
@@ -121,3 +152,4 @@ class LessonCache {
 }
 
 export const globalLessonCache = new LessonCache();
+export type { LessonCache };
