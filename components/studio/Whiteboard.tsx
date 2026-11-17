@@ -26,6 +26,8 @@ import {
   Crosshair,
   Layers,
   HelpCircle,
+  Moon,
+  Sun,
 } from "lucide-react";
 
 interface StudentStroke {
@@ -67,6 +69,7 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeTool, setActiveTool] = useState<"pointer" | "pan" | "pen" | "highlighter" | "eraser">("pointer");
   const [penColor, setPenColor] = useState<string>("#1677ff");
+  const [canvasTheme, setCanvasTheme] = useState<"porcelain" | "blueprint">("porcelain");
 
   // Pan state
   const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -351,6 +354,19 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
             <Grid className="w-3.5 h-3.5" />
           </button>
 
+          {/* Canvas Blueprint/Studio Mode Toggle */}
+          <button
+            onClick={() => setCanvasTheme((t) => (t === "porcelain" ? "blueprint" : "porcelain"))}
+            title={canvasTheme === "blueprint" ? "Switch to Porcelain Studio (Light)" : "Switch to Midnight Blueprint (Dark)"}
+            className={`p-1.5 rounded-lg text-xs transition-all duration-200 ${
+              canvasTheme === "blueprint"
+                ? "bg-[#0f172a] text-[#38bdf8] shadow-xs font-semibold"
+                : "text-neutral-600 hover:text-[#0d0e11]"
+            }`}
+          >
+            {canvasTheme === "blueprint" ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
+          </button>
+
           <div className="h-3 w-px bg-neutral-300 mx-0.5" />
 
           {/* Zoom controls */}
@@ -396,11 +412,17 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
 
       {/* Main Whiteboard Canvas Surface */}
       <div className="relative flex-1 w-full h-full min-h-[460px] lg:min-h-[540px] flex items-center justify-center overflow-hidden p-4 select-none bg-[#f1f3f7]">
-        {/* The Porcelain White Smartboard Chassis */}
+        {/* The Porcelain White or Midnight Blueprint Smartboard Chassis */}
         <div
-          className={`w-full h-full max-w-[1000px] max-h-[600px] rounded-xl overflow-hidden border border-[#d8dce6] transition-transform duration-100 ease-out cursor-${
+          className={`w-full h-full max-w-[1000px] max-h-[600px] rounded-xl overflow-hidden border transition-all duration-300 ease-out cursor-${
             activeTool === "pan" ? (isPanning ? "grabbing" : "grab") : activeTool === "pen" || activeTool === "highlighter" ? "crosshair" : "default"
-          } ${showGrid ? "smartboard-porcelain" : "bg-white shadow-[0_10px_35px_rgba(0,0,0,0.06)]"}`}
+          } ${
+            canvasTheme === "blueprint"
+              ? "blueprint-grid border-[#1e293b] shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
+              : showGrid
+              ? "smartboard-porcelain border-[#d8dce6]"
+              : "bg-white border-[#d8dce6] shadow-[0_10px_35px_rgba(0,0,0,0.06)]"
+          }`}
           style={{
             transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
           }}
@@ -451,10 +473,12 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
 
             {/* AI Teacher Whiteboard Layer */}
             <g id="teacher-layer">
-              {actions.map((action) => (
+              {actions.map((action, actionIdx) => (
                 <WhiteboardActionRenderer
                   key={(action as { id?: string }).id || Math.random().toString()}
                   action={action}
+                  actionIndex={actionIdx}
+                  isBlueprint={canvasTheme === "blueprint"}
                   onSelectAction={(act) => setInspectedAction(act)}
                   isSelected={Boolean(inspectedAction && "id" in inspectedAction && "id" in action && inspectedAction.id === action.id)}
                 />

@@ -8,12 +8,16 @@ interface WhiteboardActionRendererProps {
   action: WhiteboardAction;
   onSelectAction?: (action: WhiteboardAction) => void;
   isSelected?: boolean;
+  isBlueprint?: boolean;
+  actionIndex?: number;
 }
 
 export const WhiteboardActionRenderer: React.FC<WhiteboardActionRendererProps> = ({
   action,
   onSelectAction,
   isSelected = false,
+  isBlueprint = false,
+  actionIndex = 0,
 }) => {
   const hasDetails = Boolean((action as any).details || (action as any).tooltip);
   const handleInteraction = (e: React.MouseEvent) => {
@@ -23,27 +27,30 @@ export const WhiteboardActionRenderer: React.FC<WhiteboardActionRendererProps> =
     }
   };
 
+  // Stagger animation entry based on action index for progressive drawing feel
+  const entryDelay = Math.min(1.2, actionIndex * 0.08);
+
   switch (action.type) {
     case "drawImage": {
       return (
         <motion.g
           key={action.id}
           id={action.id}
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
+          transition={{ duration: 0.5, delay: entryDelay, ease: "easeOut" }}
           onClick={handleInteraction}
           className={hasDetails ? "cursor-pointer group" : ""}
         >
-          {/* Subtle backing container */}
+          {/* Backing container */}
           <rect
             x={action.x - 4}
             y={action.y - 4}
             width={action.width + 8}
             height={action.height + 8}
             rx={12}
-            fill="#ffffff"
-            stroke={isSelected ? "#2563eb" : "#e2e8f0"}
+            fill={isBlueprint ? "#0f172a" : "#ffffff"}
+            stroke={isSelected ? "#38bdf8" : isBlueprint ? "#1e293b" : "#e2e8f0"}
             strokeWidth={isSelected ? 3 : 1.5}
             className="filter drop-shadow-[0_4px_16px_rgba(0,0,0,0.08)]"
           />
@@ -60,21 +67,23 @@ export const WhiteboardActionRenderer: React.FC<WhiteboardActionRendererProps> =
             className="rounded-lg"
           />
 
-          {/* Optional Caption Badge */}
+          {/* Caption Badge */}
           {action.caption && (
             <g transform={`translate(${action.x + 8}, ${action.y + action.height - 28})`}>
               <rect
                 width={Math.min(action.width - 16, Math.max(100, action.caption.length * 8 + 16))}
                 height={22}
                 rx={6}
-                fill="rgba(15, 23, 42, 0.85)"
+                fill={isBlueprint ? "rgba(15, 23, 42, 0.95)" : "rgba(15, 23, 42, 0.85)"}
+                stroke={isBlueprint ? "#38bdf8" : "none"}
+                strokeWidth={isBlueprint ? 1 : 0}
               />
               <text
                 x={10}
                 y={15}
                 fontSize={11}
-                fill="#f8fafc"
-                fontWeight="500"
+                fill={isBlueprint ? "#38bdf8" : "#f8fafc"}
+                fontWeight="600"
                 fontFamily="system-ui, -apple-system, sans-serif"
                 className="select-none"
               >
@@ -89,7 +98,7 @@ export const WhiteboardActionRenderer: React.FC<WhiteboardActionRendererProps> =
               x={action.x + action.width}
               y={action.y + action.height + 16}
               fontSize={9}
-              fill="#94a3b8"
+              fill={isBlueprint ? "#64748b" : "#94a3b8"}
               textAnchor="end"
               fontFamily="system-ui, sans-serif"
               className="select-none"
@@ -102,21 +111,29 @@ export const WhiteboardActionRenderer: React.FC<WhiteboardActionRendererProps> =
     }
 
     case "addText": {
+      const textColor = isBlueprint
+        ? action.fill && action.fill !== "#0f172a" && action.fill !== "#334155"
+          ? action.fill
+          : "#f8fafc"
+        : action.fill && action.fill !== "#f8fafc"
+        ? action.fill
+        : "#0f172a";
+
       return (
         <motion.text
           key={action.id}
           id={action.id}
           x={action.x}
           y={action.y}
-          fontSize={action.fontSize || 18}
-          fill={action.fill && action.fill !== "#f8fafc" ? action.fill : "#0f172a"}
+          fontSize={action.fontSize || 16}
+          fill={textColor}
           fontWeight={action.fontWeight || "normal"}
           fontFamily="system-ui, -apple-system, sans-serif"
-          initial={{ opacity: 0, y: action.y - 4 }}
+          initial={{ opacity: 0, y: action.y - 6 }}
           animate={{ opacity: 1, y: action.y }}
-          transition={{ duration: 0.45, ease: "easeOut" }}
+          transition={{ duration: 0.45, delay: entryDelay, ease: "easeOut" }}
           onClick={handleInteraction}
-          className={`select-none ${hasDetails ? "cursor-pointer hover:fill-blue-600 transition-colors" : ""}`}
+          className={`select-none ${hasDetails ? "cursor-pointer hover:fill-electric transition-colors" : ""}`}
         >
           {action.text}
         </motion.text>
@@ -124,6 +141,7 @@ export const WhiteboardActionRenderer: React.FC<WhiteboardActionRendererProps> =
     }
 
     case "drawLine": {
+      const strokeColor = isBlueprint && action.stroke === "#1677ff" ? "#38bdf8" : action.stroke || "#1677ff";
       return (
         <motion.line
           key={action.id}
@@ -132,13 +150,13 @@ export const WhiteboardActionRenderer: React.FC<WhiteboardActionRendererProps> =
           y1={action.y1}
           x2={action.x2}
           y2={action.y2}
-          stroke={action.stroke || "#2563eb"}
-          strokeWidth={action.strokeWidth || 3}
+          stroke={strokeColor}
+          strokeWidth={action.strokeWidth || 2.5}
           strokeDasharray={action.strokeDasharray}
           strokeLinecap="round"
           initial={{ pathLength: 0, opacity: 0 }}
           animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ duration: 0.65, ease: "easeInOut" }}
+          transition={{ duration: 0.6, delay: entryDelay, ease: "easeInOut" }}
           onClick={handleInteraction}
           className={hasDetails ? "cursor-pointer" : ""}
         />
@@ -146,28 +164,52 @@ export const WhiteboardActionRenderer: React.FC<WhiteboardActionRendererProps> =
     }
 
     case "drawCircle": {
+      const strokeColor = isBlueprint ? "#38bdf8" : action.stroke || "#0284c7";
+      const fillColor = isBlueprint ? "rgba(56, 189, 248, 0.12)" : action.fill || "rgba(224, 242, 254, 0.6)";
+
       return (
-        <motion.circle
+        <motion.g
           key={action.id}
           id={action.id}
-          cx={action.cx}
-          cy={action.cy}
-          r={action.r}
-          stroke={action.stroke || "#0284c7"}
-          strokeWidth={action.strokeWidth || 3}
-          strokeDasharray={action.strokeDasharray}
-          fill={action.fill || "none"}
-          initial={{ scale: 0.2, opacity: 0 }}
+          initial={{ scale: 0.3, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           style={{ originX: `${action.cx}px`, originY: `${action.cy}px` }}
-          transition={{ duration: 0.55, ease: "easeOut" }}
+          transition={{ duration: 0.5, delay: entryDelay, ease: "easeOut" }}
           onClick={handleInteraction}
-          className={hasDetails ? "cursor-pointer hover:stroke-blue-600 transition-colors" : ""}
-        />
+          className={hasDetails ? "cursor-pointer group" : ""}
+        >
+          {/* Subtle pulse ring on node */}
+          <circle
+            cx={action.cx}
+            cy={action.cy}
+            r={action.r + 5}
+            stroke={strokeColor}
+            strokeWidth={1}
+            strokeDasharray="3 3"
+            fill="none"
+            opacity={0.4}
+            className="animate-spin [animation-duration:12s]"
+          />
+          <circle
+            cx={action.cx}
+            cy={action.cy}
+            r={action.r}
+            stroke={strokeColor}
+            strokeWidth={action.strokeWidth || 2.5}
+            strokeDasharray={action.strokeDasharray}
+            fill={fillColor}
+            className="group-hover:stroke-blue-400 transition-colors"
+          />
+        </motion.g>
       );
     }
 
     case "drawRect": {
+      const strokeColor = isBlueprint ? "#38bdf8" : action.stroke || "#059669";
+      const fillColor = isBlueprint
+        ? "rgba(15, 23, 42, 0.85)"
+        : action.fill || "rgba(241, 245, 249, 0.75)";
+
       return (
         <motion.rect
           key={action.id}
@@ -176,20 +218,20 @@ export const WhiteboardActionRenderer: React.FC<WhiteboardActionRendererProps> =
           y={action.y}
           width={action.width}
           height={action.height}
-          rx={action.rx || 8}
-          stroke={action.stroke || "#059669"}
+          rx={action.rx || 10}
+          stroke={strokeColor}
           strokeWidth={action.strokeWidth || 2}
           strokeDasharray={action.strokeDasharray}
-          fill={action.fill || "rgba(241, 245, 249, 0.75)"}
+          fill={fillColor}
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           style={{
             originX: `${action.x + action.width / 2}px`,
             originY: `${action.y + action.height / 2}px`,
           }}
-          transition={{ duration: 0.55, ease: "easeOut" }}
+          transition={{ duration: 0.5, delay: entryDelay, ease: "easeOut" }}
           onClick={handleInteraction}
-          className={hasDetails ? "cursor-pointer hover:stroke-blue-600 transition-colors" : ""}
+          className={hasDetails ? "cursor-pointer hover:stroke-electric transition-colors" : ""}
         />
       );
     }
@@ -200,14 +242,14 @@ export const WhiteboardActionRenderer: React.FC<WhiteboardActionRendererProps> =
           key={action.id}
           id={action.id}
           d={action.path}
-          stroke={action.stroke || "#2563eb"}
+          stroke={action.stroke || (isBlueprint ? "#38bdf8" : "#2563eb")}
           strokeWidth={action.strokeWidth || 3}
           fill={action.fill || "none"}
           strokeLinecap="round"
           strokeLinejoin="round"
           initial={{ pathLength: 0, opacity: 0 }}
           animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ duration: 0.8, ease: "easeInOut" }}
+          transition={{ duration: 0.75, delay: entryDelay, ease: "easeInOut" }}
           onClick={handleInteraction}
           className={hasDetails ? "cursor-pointer" : ""}
         />
@@ -227,6 +269,7 @@ export const WhiteboardActionRenderer: React.FC<WhiteboardActionRendererProps> =
 
       const midX = (action.x1 + action.x2) / 2;
       const midY = (action.y1 + action.y2) / 2;
+      const arrowStroke = isBlueprint ? "#38bdf8" : action.stroke || "#0284c7";
 
       return (
         <motion.g
@@ -234,7 +277,7 @@ export const WhiteboardActionRenderer: React.FC<WhiteboardActionRendererProps> =
           id={action.id}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.55 }}
+          transition={{ duration: 0.5, delay: entryDelay }}
           onClick={handleInteraction}
           className={hasDetails ? "cursor-pointer" : ""}
         >
@@ -244,18 +287,37 @@ export const WhiteboardActionRenderer: React.FC<WhiteboardActionRendererProps> =
             y1={action.y1}
             x2={action.x2}
             y2={action.y2}
-            stroke={action.stroke || "#0284c7"}
-            strokeWidth={action.strokeWidth || 3}
+            stroke={arrowStroke}
+            strokeWidth={action.strokeWidth || 2.5}
             strokeLinecap="round"
             initial={{ pathLength: 0 }}
             animate={{ pathLength: 1 }}
-            transition={{ duration: 0.55, ease: "easeInOut" }}
+            transition={{ duration: 0.55, delay: entryDelay, ease: "easeInOut" }}
           />
           {/* Arrowhead polygon */}
           <polygon
             points={`${action.x2},${action.y2} ${p1x},${p1y} ${p2x},${p2y}`}
-            fill={action.stroke || "#0284c7"}
+            fill={arrowStroke}
           />
+
+          {/* Living Scientific Signal Pulse travelling along the arrow */}
+          <motion.circle
+            r={3.5}
+            fill={isBlueprint ? "#38bdf8" : "#00d084"}
+            filter="drop-shadow(0 0 5px rgba(56,189,248,0.8))"
+            animate={{
+              cx: [action.x1, action.x2],
+              cy: [action.y1, action.y2],
+              opacity: [0, 1, 1, 0],
+            }}
+            transition={{
+              duration: 2.2,
+              repeat: Infinity,
+              ease: "linear",
+              repeatDelay: 0.5,
+            }}
+          />
+
           {/* Optional Label */}
           {action.label && (
             <g>
@@ -265,8 +327,8 @@ export const WhiteboardActionRenderer: React.FC<WhiteboardActionRendererProps> =
                 width={action.label.length * 8 + 16}
                 height={20}
                 rx={5}
-                fill="#ffffff"
-                stroke="#cbd5e1"
+                fill={isBlueprint ? "#0f172a" : "#ffffff"}
+                stroke={isBlueprint ? "#38bdf8" : "#cbd5e1"}
                 strokeWidth={1}
                 className="filter drop-shadow-sm"
               />
@@ -274,7 +336,7 @@ export const WhiteboardActionRenderer: React.FC<WhiteboardActionRendererProps> =
                 x={midX}
                 y={midY - 4}
                 fontSize={12}
-                fill={action.stroke || "#0284c7"}
+                fill={arrowStroke}
                 textAnchor="middle"
                 fontWeight="600"
                 fontFamily="system-ui, sans-serif"

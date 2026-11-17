@@ -27,15 +27,26 @@ export async function POST(req: NextRequest) {
     const headerApiKey = req.headers.get("x-nvidia-api-key");
     const activeApiKey = headerApiKey || bodyApiKey;
 
+    const startTime = Date.now();
     const lesson = await defaultAIProvider.generateLesson(topic.trim(), {
       apiKey: activeApiKey,
       model,
     });
+    const durationMs = Date.now() - startTime;
 
-    return NextResponse.json({
-      success: true,
-      lesson,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        lesson,
+        latencyMs: durationMs,
+      },
+      {
+        headers: {
+          "Server-Timing": `ai;dur=${durationMs}`,
+          "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=43200",
+        },
+      }
+    );
   } catch (error: unknown) {
     console.error("Error in /api/generate-lesson:", error);
 
