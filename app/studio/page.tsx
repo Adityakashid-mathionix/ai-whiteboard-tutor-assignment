@@ -111,12 +111,11 @@ function StudioContent() {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(
-          data.error || "Failed to generate lesson with AI tutor."
-        );
+        throw new Error(data.error || "Failed to synthesize lesson.");
       }
 
       setLesson(data.lesson);
+
       try {
         sessionStorage.setItem("braynix_active_lesson", JSON.stringify(data.lesson));
       } catch {}
@@ -134,22 +133,22 @@ function StudioContent() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#08090d] text-neutral-100 p-6">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#0066ff] to-[#00d2ff] flex items-center justify-center shadow-2xl shadow-[#0066ff]/30 mb-6 animate-pulse">
-          <Compass className="w-8 h-8 text-white" />
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#0c0d10] text-[#f6f4ef] p-6 editorial-desk-grid">
+        <div className="grid h-16 w-16 place-items-center rounded-2xl bg-white/5 font-mono text-lg font-semibold text-electric ring-1 ring-electric/30 shadow-[0_0_25px_rgba(22,119,255,0.25)] mb-6 animate-pulse">
+          BX
         </div>
-        <h2 className="text-xl font-bold tracking-tight text-white mb-2">
+        <h2 className="text-2xl font-serif font-bold text-white mb-2">
           Composing Interactive Masterclass
         </h2>
         <p className="text-xs text-neutral-400 max-w-md text-center leading-relaxed mb-6 font-sans">
           NVIDIA NIM is structuring visual smartboard vectors, sequencing teaching segments, and composing narration for{" "}
-          <span className="text-[#00d2ff] font-semibold font-mono">
+          <span className="text-electric font-semibold font-serif italic text-sm">
             &ldquo;{topicParam || "your topic"}&rdquo;
           </span>
           ...
         </p>
-        <div className="flex items-center space-x-2 text-xs text-[#00d2ff] bg-[#0f243c] border border-[#1b3d63] px-4 py-2 rounded-full">
-          <Loader2 className="w-4 h-4 animate-spin text-[#00d2ff]" />
+        <div className="flex items-center space-x-2 text-xs font-mono text-electric bg-electric/10 border border-electric/25 px-4 py-2 rounded-full">
+          <Loader2 className="w-4 h-4 animate-spin text-electric" />
           <span>Generating SVG diagrams and synchronized lesson...</span>
         </div>
       </div>
@@ -158,26 +157,26 @@ function StudioContent() {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#08090d] text-neutral-100 p-6">
-        <div className="w-full max-w-lg bg-[#10121a] border border-[#521926] rounded-2xl p-6 shadow-2xl">
-          <div className="flex items-center space-x-3 pb-4 border-b border-[#222533] text-[#ff3355]">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#0c0d10] text-[#f6f4ef] p-6 editorial-desk-grid">
+        <div className="w-full max-w-lg bg-[#121620] border border-rose-500/30 rounded-2xl p-6 shadow-2xl">
+          <div className="flex items-center space-x-3 pb-4 border-b border-[#282d3b] text-rose-400">
             <AlertCircle className="w-6 h-6 flex-shrink-0" />
-            <h2 className="text-base font-bold text-white">Lesson Generation Notice</h2>
+            <h2 className="text-base font-serif font-bold text-white">Lesson Generation Notice</h2>
           </div>
           <div className="py-4 text-xs text-neutral-300 space-y-3 leading-relaxed">
-            <p className="bg-[#2b0d14] p-3 rounded-xl border border-[#521926] font-mono text-[#ff3355]">
+            <p className="bg-rose-950/40 p-3 rounded-xl border border-rose-900/50 font-mono text-rose-300">
               {error}
             </p>
-            <p className="text-neutral-400">
+            <p className="text-neutral-400 font-sans">
               You can provide your free NVIDIA NIM API key in the studio settings, or explore one of the pre-rendered masterclasses below:
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 font-mono text-xs">
               <button
                 onClick={() => {
                   setLesson(EXEMPLAR_LESSONS.heart);
                   setError(null);
                 }}
-                className="p-2.5 rounded-xl bg-[#141722] hover:bg-[#1a1d2c] text-xs text-neutral-200 border border-[#222533] transition-colors text-left"
+                className="p-2.5 rounded-xl bg-[#141720] hover:bg-[#181c28] text-xs text-neutral-200 border border-[#282d3b] hover:border-electric/40 transition-colors text-left"
               >
                 🫀 Human Heart
               </button>
@@ -186,7 +185,7 @@ function StudioContent() {
                   setLesson(EXEMPLAR_LESSONS.photosynthesis);
                   setError(null);
                 }}
-                className="p-2.5 rounded-xl bg-[#141722] hover:bg-[#1a1d2c] text-xs text-neutral-200 border border-[#222533] transition-colors text-left"
+                className="p-2.5 rounded-xl bg-[#141720] hover:bg-[#181c28] text-xs text-neutral-200 border border-[#282d3b] hover:border-electric/40 transition-colors text-left"
               >
                 🌿 Photosynthesis
               </button>
@@ -195,7 +194,7 @@ function StudioContent() {
                   setLesson(EXEMPLAR_LESSONS.api);
                   setError(null);
                 }}
-                className="p-2.5 rounded-xl bg-[#141722] hover:bg-[#1a1d2c] text-xs text-neutral-200 border border-[#222533] transition-colors text-left"
+                className="p-2.5 rounded-xl bg-[#141720] hover:bg-[#181c28] text-xs text-neutral-200 border border-[#282d3b] hover:border-electric/40 transition-colors text-left"
               >
                 🌐 How an API Works
               </button>
@@ -204,7 +203,7 @@ function StudioContent() {
                   setLesson(EXEMPLAR_LESSONS.newton);
                   setError(null);
                 }}
-                className="p-2.5 rounded-xl bg-[#141722] hover:bg-[#1a1d2c] text-xs text-neutral-200 border border-[#222533] transition-colors text-left"
+                className="p-2.5 rounded-xl bg-[#141720] hover:bg-[#181c28] text-xs text-neutral-200 border border-[#282d3b] hover:border-electric/40 transition-colors text-left"
               >
                 🍎 Newton&apos;s Laws
               </button>
@@ -213,16 +212,16 @@ function StudioContent() {
                   setLesson(EXEMPLAR_LESSONS.react_native);
                   setError(null);
                 }}
-                className="p-2.5 rounded-xl bg-[#141722] hover:bg-[#1a1d2c] text-xs text-neutral-200 border border-[#222533] transition-colors text-left"
+                className="p-2.5 rounded-xl bg-[#141720] hover:bg-[#181c28] text-xs text-neutral-200 border border-[#282d3b] hover:border-electric/40 transition-colors text-left"
               >
                 ⚛️ React Native
               </button>
             </div>
           </div>
-          <div className="pt-4 border-t border-[#222533] flex items-center justify-between">
+          <div className="pt-4 border-t border-[#282d3b] flex items-center justify-between font-mono text-xs">
             <Link
               href="/"
-              className="flex items-center space-x-1.5 text-xs text-neutral-400 hover:text-white transition-colors"
+              className="flex items-center space-x-1.5 text-neutral-400 hover:text-white transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back to Topics</span>
@@ -230,7 +229,7 @@ function StudioContent() {
             {topicParam && (
               <button
                 onClick={() => generateLiveLesson(topicParam, levelParam)}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[#0066ff] hover:bg-[#0052cc] text-xs text-white transition-colors shadow-sm"
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-electric hover:bg-[#0a4fbf] text-white transition-colors shadow-sm font-semibold"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 <span>Retry Generation</span>
@@ -253,8 +252,8 @@ export default function StudioPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center min-h-screen bg-[#08090d] text-neutral-100">
-          <Loader2 className="w-8 h-8 animate-spin text-[#0066ff]" />
+        <div className="flex items-center justify-center min-h-screen bg-[#0c0d10] text-[#f6f4ef]">
+          <Loader2 className="w-8 h-8 animate-spin text-electric" />
         </div>
       }
     >

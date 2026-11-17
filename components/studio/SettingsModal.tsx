@@ -66,15 +66,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-md bg-[#10121a] border border-[#222533] rounded-2xl shadow-2xl overflow-hidden p-6 text-neutral-200">
-        <div className="flex items-center justify-between pb-4 border-b border-[#222533]">
+      <div className="w-full max-w-md bg-[#121620] border border-[#282d3b] rounded-2xl shadow-2xl overflow-hidden p-6 text-[#f6f4ef]">
+        <div className="flex items-center justify-between pb-4 border-b border-[#282d3b]">
           <div className="flex items-center space-x-2">
-            <Key className="w-5 h-5 text-[#00d2ff]" />
-            <h3 className="text-base font-bold text-white">AI Provider Settings</h3>
+            <Key className="w-5 h-5 text-electric" />
+            <h3 className="text-base font-serif font-bold text-white">AI Provider Settings</h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-[#1a1d2c] transition-colors"
+            className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-[#181c28] transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -84,14 +84,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           {/* API Key */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-semibold text-neutral-300">
+              <label className="text-xs font-mono font-semibold text-neutral-300">
                 NVIDIA NIM API Key
               </label>
               <a
                 href="https://build.nvidia.com"
                 target="_blank"
                 rel="noreferrer"
-                className="text-[11px] text-[#00d2ff] hover:underline flex items-center space-x-1"
+                className="text-[11px] font-mono text-electric hover:underline flex items-center space-x-1"
               >
                 <span>Get free key</span>
                 <ExternalLink className="w-3 h-3" />
@@ -102,17 +102,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               value={localKey}
               onChange={(e) => setLocalKey(e.target.value)}
               placeholder="nvapi-..."
-              className="w-full bg-[#0b0d13] border border-[#262a3a] focus:border-[#0066ff] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-[#0066ff] font-mono"
+              className="w-full bg-[#141720] border border-[#282d3b] focus:border-electric rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-electric font-mono"
             />
             <p className="text-[11px] text-neutral-400 mt-1.5 flex items-center space-x-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#00b875] flex-shrink-0" />
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
               <span>Keys remain server-side and are never exposed in client bundles.</span>
             </p>
           </div>
 
           {/* Model selection */}
           <div>
-            <label className="text-xs font-semibold text-neutral-300 block mb-2">
+            <label className="text-xs font-mono font-semibold text-neutral-300 block mb-2">
               Inference Model
             </label>
             <div className="space-y-2">
@@ -121,8 +121,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   key={m.id}
                   className={`flex flex-col p-2.5 rounded-xl border text-left cursor-pointer transition-colors ${
                     localModel === m.id
-                      ? "bg-[#181c2b] border-[#0066ff] text-white"
-                      : "bg-[#0b0d13] border-[#222533] hover:bg-[#141722] text-neutral-400"
+                      ? "bg-[#181c28] border-electric text-white"
+                      : "bg-[#141720] border-[#282d3b] hover:bg-[#181c28] text-neutral-400"
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -133,7 +133,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       value={m.id}
                       checked={localModel === m.id}
                       onChange={() => setLocalModel(m.id)}
-                      className="text-[#0066ff] focus:ring-[#0066ff]"
+                      className="text-electric focus:ring-electric"
                     />
                   </div>
                   <span className="text-[10px] text-neutral-400 mt-0.5">{m.desc}</span>
@@ -146,13 +146,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className="pt-2 flex items-center justify-end space-x-2">
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-medium text-neutral-400 hover:text-white hover:bg-[#1a1d2c] transition-colors"
+              className="px-4 py-2 rounded-xl text-xs font-mono text-neutral-400 hover:text-white hover:bg-[#181c28] transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
-              className="px-5 py-2 rounded-xl text-xs font-semibold bg-[#0066ff] hover:bg-[#0052cc] text-white transition-colors flex items-center space-x-1.5 shadow-md shadow-[#0066ff]/40"
+              className="px-5 py-2 rounded-xl text-xs font-mono font-semibold bg-electric hover:bg-[#0a4fbf] text-white transition-colors flex items-center space-x-1.5 shadow-md shadow-electric/30"
             >
               {savedSuccess ? (
                 <>

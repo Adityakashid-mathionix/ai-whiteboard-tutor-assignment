@@ -33,37 +33,37 @@ export const TutorPanel: React.FC<TutorPanelProps> = ({
   const [activeTab, setActiveTab] = useState<"notes" | "chat">("notes");
 
   return (
-    <div className="flex flex-col h-full bg-[#10121a] rounded-2xl border border-[#222533] shadow-[0_15px_40px_rgba(0,0,0,0.5)] overflow-hidden">
+    <div className="flex flex-col h-full bg-[#121620] rounded-2xl border border-[#282d3b] shadow-2xl overflow-hidden">
       {/* Instructor Profile & Tab Switch */}
-      <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#222533] bg-[#141722]">
+      <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#282d3b] bg-[#141720]">
         <div className="flex items-center space-x-3">
           <div className="relative">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0066ff] to-[#00d2ff] flex items-center justify-center text-white shadow-[0_0_15px_rgba(0,102,255,0.4)]">
+            <div className="w-9 h-9 rounded-xl bg-electric/15 text-electric border border-electric/30 flex items-center justify-center shadow-[0_0_12px_rgba(22,119,255,0.3)]">
               <GraduationCap className="w-5 h-5" />
             </div>
             <div
-              className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#10121a] ${
+              className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#121620] ${
                 status === "playing"
-                  ? "bg-[#00d2ff] shadow-[0_0_6px_rgba(0,210,255,0.8)] animate-pulse"
+                  ? "bg-electric shadow-[0_0_6px_rgba(22,119,255,0.8)] animate-pulse"
                   : status === "paused"
-                  ? "bg-[#ffaa00]"
-                  : "bg-[#00d084]"
+                  ? "bg-amber-400"
+                  : "bg-emerald-400"
               }`}
             />
           </div>
 
           <div>
             <div className="flex items-center space-x-1.5">
-              <h3 className="text-xs font-bold text-white tracking-tight">Dr. Maya Chen</h3>
-              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#0f243c] text-[#00d2ff] border border-[#1b3d63]">
+              <h3 className="text-xs font-bold text-[#f6f4ef] tracking-tight font-sans">Dr. Maya Chen</h3>
+              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-electric/10 text-electric border border-electric/25">
                 AI FELLOW
               </span>
             </div>
-            <div className="flex items-center space-x-1 text-[11px] text-neutral-400">
+            <div className="flex items-center space-x-1 text-[11px] text-neutral-400 font-mono">
               {status === "playing" ? (
-                <span className="text-[#00d2ff] font-medium flex items-center space-x-1">
+                <span className="text-electric font-medium flex items-center space-x-1">
                   <Radio className="w-3 h-3 animate-pulse" />
-                  <span>Explaining Segment {currentSegmentIndex + 1}</span>
+                  <span>Explaining Chapter {currentSegmentIndex + 1}</span>
                 </span>
               ) : status === "paused" ? (
                 <span>Paused</span>
@@ -75,99 +75,118 @@ export const TutorPanel: React.FC<TutorPanelProps> = ({
         </div>
 
         {/* Tab Toggle */}
-        <div className="flex bg-[#1a1d2c] p-0.5 rounded-xl border border-[#262a3a]">
+        <div className="flex bg-[#181c28] p-0.5 rounded-full border border-[#282d3b]">
           <button
             onClick={() => setActiveTab("notes")}
-            className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all flex items-center space-x-1.5 ${
+            className={`px-3 py-1 text-xs font-mono rounded-full transition-all flex items-center space-x-1.5 ${
               activeTab === "notes"
-                ? "bg-[#0066ff] text-white shadow-sm font-semibold"
-                : "text-neutral-400 hover:text-neutral-200"
+                ? "bg-electric text-white shadow-xs font-semibold"
+                : "text-neutral-400 hover:text-white"
             }`}
           >
-            <BookOpen className="w-3.5 h-3.5" />
+            <BookOpen className="w-3 h-3" />
             <span>Notes</span>
           </button>
           <button
             onClick={() => setActiveTab("chat")}
-            className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all flex items-center space-x-1.5 ${
+            className={`px-3 py-1 text-xs font-mono rounded-full transition-all flex items-center space-x-1.5 ${
               activeTab === "chat"
-                ? "bg-[#0066ff] text-white shadow-sm font-semibold"
-                : "text-neutral-400 hover:text-neutral-200"
+                ? "bg-electric text-white shadow-xs font-semibold"
+                : "text-neutral-400 hover:text-white"
             }`}
           >
-            <MessageSquare className="w-3.5 h-3.5" />
-            <span>Q&A</span>
+            <MessageSquare className="w-3 h-3" />
+            <span>Ask Q&A</span>
           </button>
         </div>
       </div>
 
-      {/* Tab Content */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {activeTab === "notes" ? (
-          <div className="space-y-4">
-            {/* Live Narration Transcript */}
-            <div className="p-4 rounded-xl bg-[#0b0d13] border border-[#222533] shadow-inner">
-              <div className="flex items-center space-x-1.5 text-xs font-semibold text-[#00d2ff] mb-2">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>
-                  Chapter {currentSegmentIndex + 1}: {currentSegment?.heading}
-                </span>
-              </div>
-              <div className="relative pl-3 border-l-2 border-[#0066ff] my-2">
-                <p className="text-xs text-neutral-200 leading-relaxed font-sans">
-                  {currentSegment?.narration}
-                </p>
-              </div>
+      {/* Tab 1: Lecture Notes & Concepts */}
+      {activeTab === "notes" ? (
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Current Chapter Narration Script with handwritten tutor callout */}
+          <div className="p-4 rounded-xl bg-[#141720] border border-[#282d3b] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-electric">
+                Chapter {currentSegmentIndex + 1} Spoken Script
+              </span>
+              <span className="text-[10px] font-mono text-neutral-500">
+                Word-by-word Vector Sync
+              </span>
             </div>
+            <p className="text-xs text-[#f6f4ef] leading-relaxed font-sans">
+              {currentSegment?.narration || "Select a chapter or press Play to begin narration."}
+            </p>
 
-            {/* Key Takeaway Card */}
-            {currentSegment?.keyTakeaway && (
-              <div className="p-4 rounded-xl bg-[#211a08] border border-[#6b4700] shadow-sm">
-                <div className="flex items-center space-x-1.5 text-xs font-bold text-[#ffaa00] mb-1.5">
-                  <Lightbulb className="w-3.5 h-3.5 text-[#ffaa00]" />
-                  <span className="uppercase tracking-wider text-[10px] font-mono">
-                    Key Concept Takeaway
-                  </span>
-                </div>
-                <p className="text-xs text-[#ffd280] leading-relaxed font-medium">
-                  {currentSegment.keyTakeaway}
-                </p>
-              </div>
-            )}
-
-            {/* Interactive Smartboard Tips */}
-            <div className="p-3.5 rounded-xl bg-[#141722] border border-[#222533] text-xs text-neutral-400">
-              <div className="flex items-center space-x-1.5 text-neutral-300 font-medium mb-1">
-                <HelpCircle className="w-3.5 h-3.5 text-[#00d2ff]" />
-                <span>Smartboard Interactivity</span>
-              </div>
-              <p className="text-[11px] text-neutral-400 leading-relaxed">
-                Click any visual diagram or label to open a concept breakdown. Use the stylus pen and highlighter to annotate notes on the smartboard.
+            {/* Handwritten note from Dr. Maya */}
+            <div className="pt-2 border-t border-dashed border-[#282d3b] flex items-start gap-2 text-amber-300">
+              <span className="handwritten text-xl leading-none">“</span>
+              <p className="handwritten text-lg leading-tight text-amber-300/90">
+                Notice how the smartboard coordinates align with this exact explanation.
               </p>
             </div>
+          </div>
 
-            {/* Switch to Q&A Prompt Button */}
-            <div className="pt-1">
-              <button
-                onClick={() => setActiveTab("chat")}
-                className="w-full py-2.5 px-3.5 rounded-xl bg-[#0066ff]/10 hover:bg-[#0066ff]/20 border border-[#0066ff]/30 text-xs text-[#00d2ff] hover:text-white transition-all flex items-center justify-center space-x-2 shadow-sm font-medium"
-              >
-                <MessageSquare className="w-3.5 h-3.5 text-[#00d2ff]" />
-                <span>Ask Dr. Maya a follow-up question</span>
-              </button>
+          {/* Key Takeaways */}
+          {(() => {
+            const takeaways =
+              (lesson.keyTakeaways && lesson.keyTakeaways.length > 0)
+                ? lesson.keyTakeaways
+                : lesson.segments.map((s) => s.keyTakeaway).filter(Boolean);
+
+            if (!takeaways || takeaways.length === 0) return null;
+
+            return (
+              <div className="space-y-2">
+                <div className="flex items-center space-x-1.5 text-xs font-mono font-bold uppercase tracking-wider text-neutral-300 px-1">
+                  <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Core Concept Takeaways</span>
+                </div>
+                <div className="space-y-1.5">
+                  {takeaways.map((point, idx) => (
+                    <div
+                      key={idx}
+                      className="p-3 rounded-xl bg-[#141720] border border-[#282d3b] flex items-start space-x-2.5 text-xs text-neutral-300"
+                    >
+                      <span className="font-mono text-[10px] font-bold text-electric px-1.5 py-0.5 rounded bg-electric/10 border border-electric/20 flex-shrink-0">
+                        0{idx + 1}
+                      </span>
+                      <span className="leading-relaxed font-sans">{point}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Socratic Question Quick Prompt */}
+          <div className="p-3.5 rounded-xl bg-gradient-to-br from-electric/10 to-transparent border border-electric/25 space-y-2">
+            <div className="flex items-center space-x-2 text-xs font-bold text-electric">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span className="font-sans">Have a follow-up question?</span>
             </div>
+            <p className="text-[11px] text-neutral-300 leading-relaxed font-sans">
+              Switch to the Ask Q&A tab to query Dr. Maya Chen. She uses NVIDIA NIM with the complete curriculum context.
+            </p>
+            <button
+              onClick={() => setActiveTab("chat")}
+              className="w-full py-1.5 rounded-lg bg-electric hover:bg-[#0a4fbf] text-white text-xs font-mono font-semibold transition-all shadow-sm"
+            >
+              Ask Dr. Maya a Question →
+            </button>
           </div>
-        ) : (
-          <div className="h-full">
-            <FollowUpChat
-              lesson={lesson}
-              currentSegmentHeading={currentSegment?.heading}
-              apiKey={apiKey}
-              model={model}
-            />
-          </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        /* Tab 2: NVIDIA NIM Follow-Up Chat */
+        <div className="flex-1 overflow-hidden p-3 flex flex-col">
+          <FollowUpChat
+            lesson={lesson}
+            currentSegmentHeading={currentSegment?.heading}
+            apiKey={apiKey}
+            model={model}
+          />
+        </div>
+      )}
     </div>
   );
 };

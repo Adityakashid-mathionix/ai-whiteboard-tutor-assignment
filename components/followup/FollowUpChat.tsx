@@ -114,8 +114,8 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
             <div
               className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
                 msg.role === "user"
-                  ? "bg-[#0066ff] text-white"
-                  : "bg-[#141722] text-[#00d2ff] border border-[#262a3a]"
+                  ? "bg-electric text-white"
+                  : "bg-electric/15 text-electric border border-electric/30"
               }`}
             >
               {msg.role === "user" ? (
@@ -126,15 +126,15 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
             </div>
 
             <div
-              className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 leading-relaxed ${
+              className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 leading-relaxed font-sans ${
                 msg.role === "user"
-                  ? "bg-[#0066ff] text-white rounded-tr-none font-medium"
-                  : "bg-[#0b0d13] border border-[#222533] text-neutral-200 rounded-tl-none whitespace-pre-line"
+                  ? "bg-electric text-white rounded-tr-none font-medium"
+                  : "bg-[#141720] border border-[#282d3b] text-[#f6f4ef] rounded-tl-none whitespace-pre-line"
               }`}
             >
               {msg.content}
               <div
-                className={`text-[9px] mt-1 ${
+                className={`text-[9px] font-mono mt-1 ${
                   msg.role === "user" ? "text-blue-100" : "text-neutral-500"
                 }`}
               >
@@ -145,16 +145,16 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
         ))}
 
         {isLoading && (
-          <div className="flex items-center space-x-2 text-xs text-[#00d2ff] bg-[#0f243c] border border-[#1b3d63] p-2.5 rounded-xl w-fit">
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#00d2ff]" />
+          <div className="flex items-center space-x-2 text-xs text-electric bg-electric/10 border border-electric/25 p-2.5 rounded-xl w-fit font-mono">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-electric" />
             <span>Dr. Maya is formulating a Socratic explanation...</span>
           </div>
         )}
 
         {error && (
-          <div className="flex items-start space-x-2 text-xs text-rose-300 bg-[#2b0d14] border border-[#521926] p-2.5 rounded-xl">
+          <div className="flex items-start space-x-2 text-xs text-rose-300 bg-[#2b0d14] border border-[#521926] p-2.5 rounded-xl font-mono">
             <AlertCircle className="w-4 h-4 text-[#ff3355] flex-shrink-0 mt-0.5" />
-            <span className="flex-1">{error}</span>
+            <span className="flex-1 font-sans">{error}</span>
           </div>
         )}
       </div>
@@ -166,9 +166,9 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
             <button
               key={idx}
               onClick={() => handleSend(q)}
-              className="text-[11px] px-2.5 py-1 rounded-full bg-[#141722] hover:bg-[#1a1d2c] text-neutral-300 border border-[#262a3a] transition-colors flex items-center space-x-1 text-left"
+              className="text-[11px] font-mono px-2.5 py-1 rounded-full bg-[#141720] hover:bg-[#181c28] text-neutral-300 border border-[#282d3b] transition-colors flex items-center space-x-1 text-left"
             >
-              <Sparkles className="w-2.5 h-2.5 text-[#00d2ff]" />
+              <Sparkles className="w-2.5 h-2.5 text-electric" />
               <span className="truncate max-w-[210px]">{q}</span>
             </button>
           ))}
@@ -181,7 +181,7 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
           e.preventDefault();
           handleSend();
         }}
-        className="pt-2 border-t border-[#222533] flex items-center space-x-2"
+        className="pt-2 border-t border-[#282d3b] flex items-center space-x-2"
       >
         <input
           type="text"
@@ -189,12 +189,12 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask Dr. Maya a follow-up question..."
           disabled={isLoading}
-          className="flex-1 bg-[#0b0d13] border border-[#262a3a] focus:border-[#0066ff] rounded-xl px-3.5 py-2 text-xs text-neutral-100 placeholder-neutral-500 focus:outline-none focus:ring-1 focus:ring-[#0066ff] transition-all disabled:opacity-50"
+          className="flex-1 bg-[#141720] border border-[#282d3b] focus:border-electric rounded-xl px-3.5 py-2 text-xs text-[#f6f4ef] placeholder-neutral-500 focus:outline-none focus:ring-1 focus:ring-electric transition-all disabled:opacity-50 font-sans"
         />
         <button
           type="submit"
           disabled={isLoading || !input.trim()}
-          className="p-2 rounded-xl bg-[#0066ff] hover:bg-[#0052cc] text-white disabled:opacity-40 transition-colors flex items-center justify-center shadow-md shadow-[#0066ff]/40"
+          className="p-2 rounded-xl bg-electric hover:bg-[#0a4fbf] text-white disabled:opacity-40 transition-colors flex items-center justify-center shadow-md shadow-electric/30"
         >
           <Send className="w-3.5 h-3.5" />
         </button>

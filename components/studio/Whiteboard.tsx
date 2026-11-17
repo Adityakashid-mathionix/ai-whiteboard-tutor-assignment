@@ -62,7 +62,7 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeTool, setActiveTool] = useState<"pointer" | "pan" | "pen" | "highlighter" | "eraser">("pointer");
-  const [penColor, setPenColor] = useState<string>("#0066ff");
+  const [penColor, setPenColor] = useState<string>("#1677ff");
   const [laserPos, setLaserPos] = useState<{ x: number; y: number } | null>(null);
   const [showLaser, setShowLaser] = useState(true);
 
@@ -99,69 +99,62 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
     return () => document.removeEventListener("fullscreenchange", handleFsChange);
   }, []);
 
-  // Compute laser pointer focus on the most recent action
+  // Compute laser pointer position based on current active action
   useEffect(() => {
-    if (status !== "playing" || actions.length === 0 || !showLaser) {
+    if (!actions || actions.length === 0) {
       setLaserPos(null);
       return;
     }
 
     const lastAction = actions[actions.length - 1];
-    if (lastAction) {
-      if ("x" in lastAction && "y" in lastAction) {
-        setLaserPos({ x: (lastAction as any).x + 12, y: (lastAction as any).y + 8 });
-      } else if ("cx" in lastAction && "cy" in lastAction) {
-        setLaserPos({ x: (lastAction as any).cx, y: (lastAction as any).cy });
-      } else if ("x2" in lastAction && "y2" in lastAction) {
-        setLaserPos({ x: (lastAction as any).x2, y: (lastAction as any).y2 });
-      } else {
-        setLaserPos(null);
-      }
-    }
-  }, [actions, status, showLaser]);
+    if (!lastAction) return;
 
-  // Convert client mouse event to SVG viewBox (1000 x 600) coordinates
-  const getSvgCoordinates = useCallback((e: React.MouseEvent<SVGSVGElement>): { x: number; y: number } | null => {
+    if ("x" in lastAction && "y" in lastAction && typeof lastAction.x === "number" && typeof lastAction.y === "number") {
+      setLaserPos({ x: lastAction.x, y: lastAction.y });
+    } else if ("cx" in lastAction && "cy" in lastAction && typeof lastAction.cx === "number" && typeof lastAction.cy === "number") {
+      setLaserPos({ x: lastAction.cx, y: lastAction.cy });
+    } else if ("x2" in lastAction && "y2" in lastAction && typeof lastAction.x2 === "number" && typeof lastAction.y2 === "number") {
+      setLaserPos({ x: lastAction.x2, y: lastAction.y2 });
+    }
+  }, [actions]);
+
+  // Convert client mouse coordinates to SVG 1000x600 viewBox coordinates
+  const getSvgPoint = (clientX: number, clientY: number): { x: number; y: number } | null => {
     if (!svgRef.current) return null;
     const pt = svgRef.current.createSVGPoint();
-    pt.x = e.clientX;
-    pt.y = e.clientY;
-    const svgP = pt.matrixTransform(svgRef.current.getScreenCTM()?.inverse());
-    return {
-      x: Math.max(0, Math.min(1000, Math.round(svgP.x))),
-      y: Math.max(0, Math.min(600, Math.round(svgP.y))),
-    };
-  }, []);
+    pt.x = clientX;
+    pt.y = clientY;
+    const ctm = svgRef.current.getScreenCTM();
+    if (!ctm) return null;
+    const svgPoint = pt.matrixTransform(ctm.inverse());
+    return { x: svgPoint.x, y: svgPoint.y };
+  };
 
-  // Mouse handlers for Panning and Student Drawing
+  // Mouse handlers for Drawing & Panning
   const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (activeTool === "pan" || e.button === 1 || e.altKey) {
+    if (activeTool === "pan") {
       setIsPanning(true);
       panStartRef.current = { x: e.clientX - panOffset.x, y: e.clientY - panOffset.y };
       return;
     }
 
     if (activeTool === "pen" || activeTool === "highlighter") {
-      const coords = getSvgCoordinates(e);
-      if (!coords) return;
+      const pt = getSvgPoint(e.clientX, e.clientY);
+      if (!pt) return;
 
       const newStroke: StudentStroke = {
-        id: `st-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        id: `stroke-${Date.now()}-${Math.random()}`,
         tool: activeTool,
-        color: activeTool === "highlighter" ? "rgba(255, 215, 0, 0.4)" : penColor,
-        width: activeTool === "highlighter" ? 18 : 3.5,
-        points: [coords],
+        color: activeTool === "highlighter" ? "rgba(255, 235, 153, 0.45)" : penColor,
+        width: activeTool === "highlighter" ? 18 : 3,
+        points: [pt],
       };
       setCurrentStroke(newStroke);
-    } else if (activeTool === "eraser") {
-      const coords = getSvgCoordinates(e);
-      if (!coords) return;
-      eraseNearbyStrokes(coords.x, coords.y);
     }
   };
 
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (isPanning) {
+    if (isPanning && activeTool === "pan") {
       setPanOffset({
         x: e.clientX - panStartRef.current.x,
         y: e.clientY - panStartRef.current.y,
@@ -170,13 +163,9 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
     }
 
     if (currentStroke && (activeTool === "pen" || activeTool === "highlighter")) {
-      const coords = getSvgCoordinates(e);
-      if (!coords) return;
-      setCurrentStroke((prev) => (prev ? { ...prev, points: [...prev.points, coords] } : null));
-    } else if (activeTool === "eraser" && e.buttons === 1) {
-      const coords = getSvgCoordinates(e);
-      if (!coords) return;
-      eraseNearbyStrokes(coords.x, coords.y);
+      const pt = getSvgPoint(e.clientX, e.clientY);
+      if (!pt) return;
+      setCurrentStroke((prev) => (prev ? { ...prev, points: [...prev.points, pt] } : null));
     }
   };
 
@@ -184,6 +173,7 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
     if (isPanning) {
       setIsPanning(false);
     }
+
     if (currentStroke) {
       setStrokeHistory((prev) => [...prev, studentStrokes]);
       setStudentStrokes((prev) => [...prev, currentStroke]);
@@ -191,39 +181,33 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
     }
   };
 
-  const eraseNearbyStrokes = (x: number, y: number) => {
-    const radius = 25;
-    setStudentStrokes((prev) =>
-      prev.filter((stroke) => {
-        const isNear = stroke.points.some(
-          (pt) => Math.hypot(pt.x - x, pt.y - y) < radius
-        );
-        return !isNear;
-      })
-    );
-  };
-
   const handleUndo = () => {
-    if (strokeHistory.length === 0) return;
-    const previous = strokeHistory[strokeHistory.length - 1];
-    setStrokeHistory((prev) => prev.slice(0, -1));
-    setStudentStrokes(previous);
+    if (strokeHistory.length > 0) {
+      const prev = strokeHistory[strokeHistory.length - 1];
+      setStudentStrokes(prev);
+      setStrokeHistory((h) => h.slice(0, -1));
+    } else {
+      setStudentStrokes([]);
+    }
   };
 
   const handleClearStudentDrawings = () => {
     if (studentStrokes.length > 0) {
-      setStrokeHistory((prev) => [...prev, studentStrokes]);
+      setStrokeHistory((h) => [...h, studentStrokes]);
       setStudentStrokes([]);
     }
   };
 
   const handleResetAll = () => {
-    onResetZoom();
     setPanOffset({ x: 0, y: 0 });
+    onResetZoom();
   };
 
+  // Render SVG smooth path for student drawing
   const renderStrokePath = (points: { x: number; y: number }[]) => {
-    if (points.length < 2) return "";
+    if (points.length === 0) return "";
+    if (points.length === 1) return `M ${points[0].x} ${points[0].y} L ${points[0].x + 0.1} ${points[0].y + 0.1}`;
+
     let d = `M ${points[0].x} ${points[0].y}`;
     for (let i = 1; i < points.length; i++) {
       d += ` L ${points[i].x} ${points[i].y}`;
@@ -234,41 +218,41 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative flex flex-col w-full h-full bg-[#10121a] rounded-2xl border border-[#222533] shadow-[0_25px_60px_rgba(0,0,0,0.6)] overflow-hidden transition-all duration-300 ${
+      className={`relative flex flex-col w-full h-full bg-[#121620] rounded-2xl border border-[#282d3b] shadow-2xl overflow-hidden transition-all duration-300 ${
         isFullscreen ? "p-4" : ""
       }`}
     >
       {/* Smartboard Hardware Header Bar */}
-      <div className="flex flex-wrap items-center justify-between px-4 py-2.5 bg-[#141722] border-b border-[#222533] z-20 gap-2">
+      <div className="flex flex-wrap items-center justify-between px-4 py-2.5 bg-[#141720] border-b border-[#282d3b] z-20 gap-2">
         {/* Left: Hardware Model & Chapter Tag */}
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#0066ff] shadow-[0_0_8px_rgba(0,102,255,0.9)]" />
+            <span className="w-2.5 h-2.5 rounded-full bg-electric shadow-[0_0_8px_rgba(22,119,255,0.8)]" />
             <span className="text-[11px] font-mono tracking-widest text-neutral-200 font-bold uppercase">
               SMARTBOARD
             </span>
           </div>
 
-          <div className="h-3.5 w-px bg-[#262a3a]" />
+          <div className="h-3.5 w-px bg-[#282d3b]" />
 
           {currentSegmentHeading && (
-            <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#1a1d2c] border border-[#262a3a] text-xs text-[#00d2ff] font-medium max-w-sm truncate shadow-sm">
-              <Sparkles className="w-3.5 h-3.5 text-[#00d2ff] flex-shrink-0" />
+            <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#181c28] border border-[#282d3b] text-xs text-electric font-serif italic max-w-sm truncate shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 text-electric flex-shrink-0" />
               <span className="truncate">{currentSegmentHeading}</span>
             </div>
           )}
         </div>
 
         {/* Center: Stylus & Student Tools Bar */}
-        <div className="flex items-center space-x-1 bg-[#1a1d2c] p-1 rounded-xl border border-[#262a3a]">
+        <div className="flex items-center space-x-1 bg-[#181c28] p-1 rounded-xl border border-[#282d3b]">
           {/* Pointer Tool */}
           <button
             onClick={() => setActiveTool("pointer")}
             title="Inspect / Pointer Tool"
             className={`p-1.5 rounded-lg text-xs transition-colors ${
               activeTool === "pointer"
-                ? "bg-[#0066ff] text-white shadow-sm"
-                : "text-neutral-400 hover:text-neutral-200"
+                ? "bg-electric text-white shadow-sm"
+                : "text-neutral-400 hover:text-white"
             }`}
           >
             <MousePointer2 className="w-3.5 h-3.5" />
@@ -280,14 +264,14 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
             title="Pan Canvas Mode"
             className={`p-1.5 rounded-lg text-xs transition-colors ${
               activeTool === "pan"
-                ? "bg-[#0066ff] text-white shadow-sm"
-                : "text-neutral-400 hover:text-neutral-200"
+                ? "bg-electric text-white shadow-sm"
+                : "text-neutral-400 hover:text-white"
             }`}
           >
             <Move className="w-3.5 h-3.5" />
           </button>
 
-          <div className="h-3 w-px bg-[#262a3a] mx-0.5" />
+          <div className="h-3 w-px bg-[#282d3b] mx-0.5" />
 
           {/* Student Pen */}
           <button
@@ -295,8 +279,8 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
             title="Student Notes Pen"
             className={`p-1.5 rounded-lg text-xs transition-colors ${
               activeTool === "pen"
-                ? "bg-[#0066ff] text-white shadow-sm"
-                : "text-neutral-400 hover:text-neutral-200"
+                ? "bg-electric text-white shadow-sm"
+                : "text-neutral-400 hover:text-white"
             }`}
           >
             <PenTool className="w-3.5 h-3.5" />
@@ -306,8 +290,8 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
           {activeTool === "pen" && (
             <div className="flex items-center space-x-1 px-1">
               {[
-                { color: "#0066ff", title: "Cobalt Blue" },
-                { color: "#090a0f", title: "Carbon Black" },
+                { color: "#1677ff", title: "Electric Blue" },
+                { color: "#0c0d10", title: "Carbon Black" },
                 { color: "#e62e4d", title: "Crimson" },
                 { color: "#00b875", title: "Emerald" },
               ].map((c) => (
@@ -331,7 +315,7 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
             className={`p-1.5 rounded-lg text-xs transition-colors ${
               activeTool === "highlighter"
                 ? "bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-sm"
-                : "text-neutral-400 hover:text-neutral-200"
+                : "text-neutral-400 hover:text-white"
             }`}
           >
             <Highlighter className="w-3.5 h-3.5" />
@@ -344,7 +328,7 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
             className={`p-1.5 rounded-lg text-xs transition-colors ${
               activeTool === "eraser"
                 ? "bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-sm"
-                : "text-neutral-400 hover:text-neutral-200"
+                : "text-neutral-400 hover:text-white"
             }`}
           >
             <Eraser className="w-3.5 h-3.5" />
@@ -355,7 +339,7 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
               <button
                 onClick={handleUndo}
                 title="Undo stroke"
-                className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-200"
+                className="p-1.5 rounded-lg text-neutral-400 hover:text-white"
               >
                 <Undo2 className="w-3 h-3" />
               </button>
@@ -369,7 +353,7 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
             </>
           )}
 
-          <div className="h-3 w-px bg-[#262a3a] mx-0.5" />
+          <div className="h-3 w-px bg-[#282d3b] mx-0.5" />
 
           {/* Laser Pointer */}
           <button
@@ -387,20 +371,20 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
             onClick={onToggleGrid}
             title={showGrid ? "Hide Grid Matrix" : "Show Grid Matrix"}
             className={`p-1.5 rounded-lg text-xs transition-colors ${
-              showGrid ? "bg-[#262a3a] text-[#00d2ff]" : "text-neutral-400 hover:text-neutral-200"
+              showGrid ? "bg-[#282d3b] text-electric" : "text-neutral-400 hover:text-white"
             }`}
           >
             <Grid className="w-3.5 h-3.5" />
           </button>
 
-          <div className="h-3 w-px bg-[#262a3a] mx-0.5" />
+          <div className="h-3 w-px bg-[#282d3b] mx-0.5" />
 
           {/* Zoom controls */}
           <button
             onClick={onZoomOut}
             title="Zoom Out"
             disabled={zoom <= 0.75}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-200 disabled:opacity-30"
+            className="p-1.5 rounded-lg text-neutral-400 hover:text-white disabled:opacity-30"
           >
             <ZoomOut className="w-3.5 h-3.5" />
           </button>
@@ -411,25 +395,25 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
             onClick={onZoomIn}
             title="Zoom In"
             disabled={zoom >= 1.5}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-200 disabled:opacity-30"
+            className="p-1.5 rounded-lg text-neutral-400 hover:text-white disabled:opacity-30"
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={handleResetAll}
             title="Reset Zoom & Pan"
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-200"
+            className="p-1.5 rounded-lg text-neutral-400 hover:text-white"
           >
             <RotateCcw className="w-3 h-3" />
           </button>
 
-          <div className="h-3 w-px bg-[#262a3a] mx-0.5" />
+          <div className="h-3 w-px bg-[#282d3b] mx-0.5" />
 
           {/* Fullscreen */}
           <button
             onClick={toggleFullscreen}
             title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-200"
+            className="p-1.5 rounded-lg text-neutral-400 hover:text-white"
           >
             {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
           </button>
@@ -437,12 +421,12 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
       </div>
 
       {/* Main Whiteboard Canvas Surface */}
-      <div className="relative flex-1 w-full h-full min-h-[460px] lg:min-h-[540px] flex items-center justify-center overflow-hidden p-4 select-none bg-[#090a0f]">
+      <div className="relative flex-1 w-full h-full min-h-[460px] lg:min-h-[540px] flex items-center justify-center overflow-hidden p-4 select-none bg-[#0c0d10]">
         {/* The Porcelain White Smartboard Chassis */}
         <div
-          className={`w-full h-full max-w-[1000px] max-h-[600px] rounded-xl overflow-hidden border-2 border-[#2b3042] transition-transform duration-100 ease-out cursor-${
+          className={`w-full h-full max-w-[1000px] max-h-[600px] rounded-xl overflow-hidden border-2 border-[#282d3b] transition-transform duration-100 ease-out cursor-${
             activeTool === "pan" ? (isPanning ? "grabbing" : "grab") : activeTool === "pen" || activeTool === "highlighter" ? "crosshair" : "default"
-          } ${showGrid ? "smartboard-porcelain" : "bg-[#fcfdfe] shadow-[0_12px_45px_rgba(0,0,0,0.5)]"}`}
+          } ${showGrid ? "smartboard-porcelain" : "bg-[#fbf9f5] shadow-[0_12px_45px_rgba(0,0,0,0.5)]"}`}
           style={{
             transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
           }}
@@ -467,7 +451,7 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
                 refY="4"
                 orient="auto"
               >
-                <polygon points="0 0, 8 4, 0 8" fill="#0066ff" />
+                <polygon points="0 0, 8 4, 0 8" fill="#1677ff" />
               </marker>
               <marker
                 id="arrowhead-sky"
@@ -554,24 +538,24 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
               <g className="pointer-events-none">
                 <text
                   x="500"
-                  y="270"
-                  fill="#2b3042"
-                  fontSize="22"
+                  y="265"
+                  fill="#181c28"
+                  fontSize="24"
                   textAnchor="middle"
-                  fontFamily="system-ui, -apple-system, sans-serif"
-                  fontWeight="700"
+                  fontFamily="Newsreader, Georgia, serif"
+                  fontWeight="600"
                 >
                   Interactive Digital Smartboard
                 </text>
                 <text
                   x="500"
-                  y="308"
+                  y="300"
                   fill="#64748b"
-                  fontSize="14"
+                  fontSize="18"
                   textAnchor="middle"
-                  fontFamily="system-ui"
+                  fontFamily="Caveat, cursive"
                 >
-                  Press Play to begin synchronized voice & whiteboard demonstration
+                  “Press Play to begin synchronized voice & whiteboard demonstration”
                 </text>
               </g>
             )}
@@ -581,26 +565,26 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
         {/* Floating Concept Inspection Card (When Clicking Objects with Details) */}
         {inspectedAction && (
           <div className="absolute top-6 left-1/2 -translate-x-1/2 max-w-lg w-full px-4 z-30 animate-in fade-in slide-in-from-top-4 duration-200">
-            <div className="p-4 rounded-xl bg-[#141722]/95 border border-[#0066ff]/50 text-neutral-100 shadow-2xl backdrop-blur-xl flex items-start justify-between space-x-3">
+            <div className="p-4 rounded-xl bg-[#141720]/95 border border-electric/40 text-[#f6f4ef] shadow-2xl backdrop-blur-xl flex items-start justify-between space-x-3">
               <div className="flex items-start space-x-3">
-                <div className="p-2 rounded-lg bg-[#0066ff]/20 text-[#00d2ff] mt-0.5">
+                <div className="p-2 rounded-lg bg-electric/15 text-electric mt-0.5">
                   <Info className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-[#00d2ff]">
+                  <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-electric">
                     Concept Breakdown
                   </h4>
-                  <p className="text-sm font-semibold text-white mt-0.5">
+                  <p className="text-sm font-serif font-bold text-white mt-0.5">
                     {(inspectedAction as any).text || (inspectedAction as any).caption || (inspectedAction as any).label || "Diagram Component"}
                   </p>
-                  <p className="text-xs text-neutral-300 mt-1 leading-relaxed">
+                  <p className="text-xs text-neutral-300 mt-1 leading-relaxed font-sans">
                     {(inspectedAction as any).details || (inspectedAction as any).tooltip || "This visual element represents a core component in the lesson flow."}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setInspectedAction(null)}
-                className="p-1 rounded-md text-neutral-400 hover:text-white hover:bg-[#1a1d2c] transition-colors"
+                className="p-1 rounded-md text-neutral-400 hover:text-white hover:bg-[#181c28] transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -610,30 +594,30 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
 
         {/* Live Audio Oscilloscope Wave Indicator (When Speaking) */}
         {status === "playing" && (
-          <div className="absolute bottom-5 left-5 flex items-center space-x-2 px-3 py-1.5 rounded-full bg-[#141722]/95 border border-[#262a3a] backdrop-blur-md shadow-lg pointer-events-none">
-            <Radio className="w-3.5 h-3.5 text-[#00d2ff] animate-pulse" />
-            <span className="text-[10px] font-mono font-bold text-[#00d2ff]">
+          <div className="absolute bottom-5 left-5 flex items-center space-x-2 px-3 py-1.5 rounded-full bg-[#141720]/95 border border-[#282d3b] backdrop-blur-md shadow-lg pointer-events-none">
+            <Radio className="w-3.5 h-3.5 text-electric animate-pulse" />
+            <span className="text-[10px] font-mono font-bold text-electric">
               VOICE NARRATION SYNC
             </span>
             <div className="flex items-center space-x-0.5 ml-1">
-              <span className="w-1 h-3 bg-[#00d2ff] rounded-full animate-bounce [animation-delay:0ms]" />
-              <span className="w-1 h-4 bg-[#00d2ff] rounded-full animate-bounce [animation-delay:150ms]" />
-              <span className="w-1 h-2 bg-[#00d2ff] rounded-full animate-bounce [animation-delay:300ms]" />
-              <span className="w-1 h-5 bg-[#00d2ff] rounded-full animate-bounce [animation-delay:450ms]" />
+              <span className="w-1 h-3 bg-electric rounded-full animate-bounce [animation-delay:0ms]" />
+              <span className="w-1 h-4 bg-electric rounded-full animate-bounce [animation-delay:150ms]" />
+              <span className="w-1 h-2 bg-electric rounded-full animate-bounce [animation-delay:300ms]" />
+              <span className="w-1 h-5 bg-electric rounded-full animate-bounce [animation-delay:450ms]" />
             </div>
           </div>
         )}
 
         {/* Resolution Badge Bottom Right */}
-        <div className="absolute bottom-5 right-5 flex items-center space-x-2 px-3 py-1.5 rounded-full bg-[#141722]/95 border border-[#262a3a] text-[11px] font-mono text-neutral-300 backdrop-blur-md pointer-events-none shadow-lg">
+        <div className="absolute bottom-5 right-5 flex items-center space-x-2 px-3 py-1.5 rounded-full bg-[#141720]/95 border border-[#282d3b] text-[11px] font-mono text-neutral-300 backdrop-blur-md pointer-events-none shadow-lg">
           <div
             className={`w-2 h-2 rounded-full ${
               status === "playing"
-                ? "bg-[#00d2ff] shadow-[0_0_8px_rgba(0,210,255,0.8)]"
+                ? "bg-electric shadow-[0_0_8px_rgba(22,119,255,0.8)]"
                 : status === "paused"
-                ? "bg-[#ffaa00] shadow-[0_0_8px_rgba(255,170,0,0.8)]"
+                ? "bg-amber-400 shadow-[0_0_8px_rgba(255,170,0,0.8)]"
                 : status === "completed"
-                ? "bg-[#00b875] shadow-[0_0_8px_rgba(0,184,117,0.8)]"
+                ? "bg-emerald-400 shadow-[0_0_8px_rgba(0,184,117,0.8)]"
                 : "bg-neutral-500"
             }`}
           />

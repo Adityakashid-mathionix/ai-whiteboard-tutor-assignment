@@ -68,14 +68,14 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   };
 
   return (
-    <div className="flex flex-col w-full bg-[#10121a] rounded-2xl border border-[#222533] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.6)] space-y-3">
+    <div className="flex flex-col w-full bg-[#121620] rounded-2xl border border-[#282d3b] p-4 shadow-2xl space-y-3">
       {/* Top Scrubber / Segment Pills Timeline */}
       <div className="w-full">
         <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 mb-2 px-1">
-          <span className="font-sans font-bold text-neutral-200">
+          <span className="font-mono text-neutral-300">
             Chapter {totalSegments > 0 ? currentSegmentIndex + 1 : 0} of {totalSegments}
           </span>
-          <span className="truncate max-w-[280px] text-[#00d2ff] font-semibold">
+          <span className="truncate max-w-[280px] text-electric font-semibold font-serif italic text-sm">
             {segments[currentSegmentIndex]?.heading || ""}
           </span>
         </div>
@@ -90,78 +90,92 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
               <button
                 key={seg.id || idx}
                 onClick={() => onSeek(idx)}
-                className={`group relative h-2.5 rounded-full transition-all duration-300 overflow-hidden ${
-                  isActive
-                    ? "bg-[#0066ff] ring-2 ring-[#0066ff]/50 shadow-[0_0_12px_rgba(0,102,255,0.7)]"
-                    : isCompleted
-                    ? "bg-[#00b875] hover:bg-[#00d084]"
-                    : "bg-[#222533] hover:bg-[#2e3245]"
-                }`}
-                title={`Jump to Chapter ${idx + 1}: ${seg.heading}`}
+                title={`Seek to: ${seg.heading}`}
+                className="group flex flex-col space-y-1 text-left"
               >
-                {isActive && status === "playing" && (
-                  <span className="absolute inset-0 bg-white/40 animate-pulse" />
-                )}
+                <div
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    isActive
+                      ? "bg-electric shadow-[0_0_10px_rgba(22,119,255,0.7)]"
+                      : isCompleted
+                      ? "bg-emerald-500/80"
+                      : "bg-[#222530] group-hover:bg-[#282d3b]"
+                  }`}
+                />
+                <span
+                  className={`text-[9px] font-mono truncate hidden sm:block ${
+                    isActive ? "text-electric font-bold" : "text-neutral-500"
+                  }`}
+                >
+                  {idx + 1}. {seg.heading}
+                </span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Main Transport Controls Deck */}
+      {/* Main Transport Controls */}
       <div className="flex items-center justify-between pt-1">
-        {/* Left: Navigation Actions */}
+        {/* Left: Restart & Prev */}
         <div className="flex items-center space-x-1.5">
           <button
             onClick={onRestart}
-            title="Restart Lesson from Beginning"
-            className="p-2.5 rounded-xl text-neutral-400 hover:text-white hover:bg-[#1a1d2c] transition-all active:scale-95"
+            title="Restart Masterclass"
+            className="p-2 rounded-xl bg-[#141720] hover:bg-[#181c28] border border-[#282d3b] text-neutral-300 hover:text-white transition-all active:scale-95 shadow-sm"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
+
           <button
             onClick={handlePrev}
             disabled={currentSegmentIndex <= 0}
             title="Previous Chapter (←)"
-            className="p-2.5 rounded-xl text-neutral-400 hover:text-white hover:bg-[#1a1d2c] disabled:opacity-30 disabled:hover:bg-transparent transition-all active:scale-95"
+            className="p-2 rounded-xl bg-[#141720] hover:bg-[#181c28] border border-[#282d3b] text-neutral-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all active:scale-95 shadow-sm"
           >
             <SkipBack className="w-4 h-4" />
           </button>
+        </div>
+
+        {/* Center: Big Play / Pause Button */}
+        <button
+          onClick={handleMainAction}
+          className="flex items-center space-x-2 px-6 py-2.5 rounded-full bg-electric hover:bg-[#0a4fbf] text-white font-mono text-xs font-semibold shadow-electric hover:scale-105 active:scale-95 transition-all"
+        >
+          {status === "playing" ? (
+            <>
+              <Pause className="w-4 h-4" fill="currentColor" />
+              <span>PAUSE</span>
+            </>
+          ) : (
+            <>
+              <Play className="w-4 h-4" fill="currentColor" />
+              <span>{status === "paused" ? "RESUME" : "PLAY MASTERCLASS"}</span>
+            </>
+          )}
+        </button>
+
+        {/* Right: Next, Speed & Audio Mute */}
+        <div className="flex items-center space-x-2">
           <button
             onClick={handleNext}
             disabled={currentSegmentIndex >= totalSegments - 1}
             title="Next Chapter (→)"
-            className="p-2.5 rounded-xl text-neutral-400 hover:text-white hover:bg-[#1a1d2c] disabled:opacity-30 disabled:hover:bg-transparent transition-all active:scale-95"
+            className="p-2 rounded-xl bg-[#141720] hover:bg-[#181c28] border border-[#282d3b] text-neutral-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all active:scale-95 shadow-sm"
           >
             <SkipForward className="w-4 h-4" />
           </button>
-        </div>
 
-        {/* Center: Tactile Ergonomic Play/Pause Button */}
-        <button
-          onClick={handleMainAction}
-          className="flex items-center justify-center w-12 h-12 rounded-2xl bg-[#0066ff] hover:bg-[#0052cc] text-white font-bold shadow-[0_0_25px_rgba(0,102,255,0.5)] transition-all duration-200 active:scale-95"
-          title={status === "playing" ? "Pause Lesson (Space)" : "Play Lesson (Space)"}
-        >
-          {status === "playing" ? (
-            <Pause className="w-5 h-5 fill-current" />
-          ) : (
-            <Play className="w-5 h-5 fill-current ml-0.5" />
-          )}
-        </button>
-
-        {/* Right: Multiplier Speeds & Volume Mute */}
-        <div className="flex items-center space-x-2">
           {/* Speed Selector */}
-          <div className="hidden sm:flex items-center bg-[#141722] p-1 rounded-xl border border-[#222533]">
+          <div className="hidden sm:flex items-center bg-[#141720] rounded-xl border border-[#282d3b] p-0.5">
             {speeds.map((s) => (
               <button
                 key={s}
                 onClick={() => onSetSpeed(s)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-mono transition-all ${
+                className={`px-2 py-1 text-[10px] font-mono rounded-lg transition-all ${
                   speed === s
-                    ? "bg-[#0066ff] text-white font-bold shadow-sm"
-                    : "text-neutral-400 hover:text-neutral-200"
+                    ? "bg-electric text-white font-bold shadow-xs"
+                    : "text-neutral-400 hover:text-white"
                 }`}
               >
                 {s}x
@@ -169,21 +183,17 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
             ))}
           </div>
 
-          {/* Mute Audio Button */}
+          {/* Audio Mute Toggle */}
           <button
             onClick={onToggleMute}
-            title={isMuted ? "Unmute Voice Narration (M)" : "Mute Voice Narration (M)"}
-            className={`p-2.5 rounded-xl transition-all ${
+            title={isMuted ? "Unmute Narration (M)" : "Mute Narration (M)"}
+            className={`p-2 rounded-xl border transition-all active:scale-95 shadow-sm ${
               isMuted
-                ? "bg-[#2b0d14] text-[#ff3355] border border-[#521926] shadow-sm"
-                : "text-neutral-400 hover:text-white hover:bg-[#1a1d2c]"
+                ? "bg-rose-500/10 border-rose-500/40 text-rose-400"
+                : "bg-[#141720] hover:bg-[#181c28] border-[#282d3b] text-neutral-300 hover:text-white"
             }`}
           >
-            {isMuted ? (
-              <VolumeX className="w-4 h-4" />
-            ) : (
-              <Volume2 className="w-4 h-4" />
-            )}
+            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </button>
         </div>
       </div>
