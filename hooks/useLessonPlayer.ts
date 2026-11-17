@@ -52,7 +52,6 @@ export function useLessonPlayer({ lesson, onLessonComplete }: UseLessonPlayerPro
   const speech = useSpeech({
     speed,
     isMuted,
-    languageCode: lesson?.language || "en",
     onEnd: handleNarrationEnd,
     onError: handleNarrationError,
   });

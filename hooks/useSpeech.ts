@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { PlaybackSpeed } from "@/types/lesson";
-import { getLanguageByCode } from "@/lib/languages";
 
 interface UseSpeechOptions {
   onStart?: () => void;
@@ -10,14 +9,23 @@ interface UseSpeechOptions {
   onError?: (error: string) => void;
   speed?: PlaybackSpeed;
   isMuted?: boolean;
-  /** ISO code of the lesson language, e.g. "hi". */
-  languageCode?: string;
 }
 
 /**
  * Voice ranking, most natural first. Patterns are matched inside the language
  * the lesson is taught in, so a Hindi lesson never gets read by an English voice.
  */
+/** Where a hand-picked voice is remembered between visits. */
+const VOICE_STORAGE_KEY = "braynix_voice_name";
+
+function readSavedVoiceName(): string | null {
+  try {
+    return localStorage.getItem(VOICE_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
 const PREMIUM_VOICE_PATTERNS: RegExp[] = [
   /Microsoft\s+(Aria|Jenny|Guy|Eric|Sara|Steffan|Swara|Madhur)/i,
   /Natural|Neural|Premium|Enhanced|Wavenet/i,
@@ -54,7 +62,6 @@ export function useSpeech({
   onError,
   speed = 1,
   isMuted = false,
-  languageCode = "en",
 }: UseSpeechOptions = {}) {
   const [isSupported, setIsSupported] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -72,7 +79,7 @@ export function useSpeech({
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const voicePinnedRef = useRef(false);
 
-  const speechLang = getLanguageByCode(languageCode).speechLang;
+  const speechLang = "en-US";
 
   useEffect(() => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
@@ -83,9 +90,20 @@ export function useSpeech({
     const loadVoices = () => {
       const voices = window.speechSynthesis.getVoices();
       setAvailableVoices(voices);
+
       setSelectedVoice((prev) => {
-        // Keep an explicit user choice; otherwise re-pick for the language.
+        // An explicit choice wins, including one saved from a previous visit.
         if (prev && voicePinnedRef.current && voices.includes(prev)) return prev;
+
+        const savedName = readSavedVoiceName();
+        if (savedName) {
+          const saved = voices.find((v) => v.name === savedName);
+          if (saved) {
+            voicePinnedRef.current = true;
+            return saved;
+          }
+        }
+
         return selectBestVoice(voices, speechLang);
       });
     };
@@ -96,7 +114,7 @@ export function useSpeech({
     return () => {
       window.speechSynthesis.onvoiceschanged = null;
     };
-  }, [speechLang]);
+  }, []);
 
   const clearTimers = useCallback(() => {
     if (timerRef.current) {
@@ -126,8 +144,35 @@ export function useSpeech({
     (voice: SpeechSynthesisVoice | null) => {
       voicePinnedRef.current = Boolean(voice);
       setSelectedVoice(voice);
+
+      try {
+        if (voice) localStorage.setItem(VOICE_STORAGE_KEY, voice.name);
+        else localStorage.removeItem(VOICE_STORAGE_KEY);
+      } catch {
+        // Storage blocked: the choice still holds for this session.
+      }
     },
     []
+  );
+
+  /** Speaks a short sample so a voice can be judged before committing to it. */
+  const previewVoice = useCallback(
+    (voice: SpeechSynthesisVoice | null) => {
+      if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+      window.speechSynthesis.cancel();
+
+      const sample = new SpeechSynthesisUtterance(
+        "Right, let us look at how this actually works."
+      );
+      if (voice) sample.voice = voice;
+      sample.lang = voice?.lang || speechLang;
+      sample.rate = Math.max(0.6, Math.min(speed * 0.95, 2));
+      sample.pitch = 1.03;
+
+      window.speechSynthesis.speak(sample);
+    },
+    [speechLang, speed]
   );
 
   /** Simulated playback used when muted or when speech synthesis is absent. */
@@ -273,6 +318,7 @@ export function useSpeech({
     availableVoices,
     selectedVoice,
     setSelectedVoice: pickVoice,
+    previewVoice,
     speak,
     pause,
     resume,

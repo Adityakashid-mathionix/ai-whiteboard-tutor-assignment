@@ -272,6 +272,10 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({
         onSaveApiKey={handleSaveApiKey}
         selectedModel={selectedModel}
         onSaveModel={handleSaveModel}
+        voices={player.speech.availableVoices}
+        selectedVoice={player.speech.selectedVoice}
+        onSelectVoice={player.speech.setSelectedVoice}
+        onPreviewVoice={player.speech.previewVoice}
       />
     </div>
   );

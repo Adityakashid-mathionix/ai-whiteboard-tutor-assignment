@@ -28,10 +28,9 @@ function StudioContent() {
   const topicParam = searchParams.get("topic");
   const exemplarParam = searchParams.get("exemplar");
   const levelParam = searchParams.get("level") || "beginner";
-  const languageParam = searchParams.get("lang") || "en";
 
   const generateLiveLesson = useCallback(
-    async (targetTopic: string, level: string, language: string) => {
+    async (targetTopic: string, level: string) => {
       setIsLoading(true);
       setError(null);
 
@@ -54,7 +53,6 @@ function StudioContent() {
           body: JSON.stringify({
             topic: targetTopic,
             level,
-            language,
             ...(clientModel ? { model: clientModel } : {}),
           }),
         });
@@ -123,7 +121,7 @@ function StudioContent() {
           // Corrupt session payload: regenerate instead.
         }
 
-        await generateLiveLesson(topicParam, levelParam, languageParam);
+        await generateLiveLesson(topicParam, levelParam);
         return;
       }
 
@@ -139,7 +137,7 @@ function StudioContent() {
     return () => {
       cancelled = true;
     };
-  }, [topicParam, exemplarParam, levelParam, languageParam, generateLiveLesson]);
+  }, [topicParam, exemplarParam, levelParam, generateLiveLesson]);
 
   if (isLoading) {
     return (
@@ -194,7 +192,7 @@ function StudioContent() {
             </Link>
             {topicParam && (
               <button
-                onClick={() => generateLiveLesson(topicParam, levelParam, languageParam)}
+                onClick={() => generateLiveLesson(topicParam, levelParam)}
                 className="btn-interactive flex items-center gap-1.5 rounded-lg bg-electric px-3 py-1.5 font-semibold text-white"
               >
                 <RefreshCw className="h-3.5 w-3.5" />

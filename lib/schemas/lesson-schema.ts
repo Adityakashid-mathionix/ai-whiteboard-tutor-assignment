@@ -197,7 +197,6 @@ export const LessonSchema = z.object({
   title: z.string().min(2),
   topic: z.string().min(2),
   summary: z.string().min(10),
-  language: z.string().optional().default("en"),
   learningLevel: z.string().optional().default("beginner"),
   estimatedDuration: z.number().min(30).max(300).optional().default(120),
   keyTakeaways: z.array(z.string()).optional(),

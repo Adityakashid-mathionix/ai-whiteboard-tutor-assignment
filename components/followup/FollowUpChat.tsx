@@ -68,7 +68,6 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
             title: lesson.title,
             topic: lesson.topic,
             summary: lesson.summary,
-            language: lesson.language || "en",
             learningLevel: lesson.learningLevel || "beginner",
             segments: lesson.segments.map((segment) => ({
               heading: segment.heading,

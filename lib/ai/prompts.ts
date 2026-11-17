@@ -1,10 +1,8 @@
-import { getLanguageByCode, LearningLevel } from "@/lib/languages";
+import { LearningLevel } from "@/lib/learning-levels";
 
 export interface PromptOptions {
   /** Curriculum depth requested by the student. */
   level?: LearningLevel | string;
-  /** ISO code of the language the lesson should be taught in. */
-  language?: string;
 }
 
 const LEVEL_DIRECTIVES: Record<LearningLevel, string> = {
@@ -35,22 +33,6 @@ function resolveLevel(level?: string): LearningLevel {
   return "beginner";
 }
 
-function languageDirective(languageCode?: string): string {
-  const language = getLanguageByCode(languageCode || "en");
-
-  if (language.code === "en") {
-    return `### LANGUAGE
-- Write every "heading", "narration", "keyTakeaway", "summary" and on-board text label in English.`;
-  }
-
-  return `### LANGUAGE (CRITICAL)
-- Teach entirely in ${language.name} (${language.nativeName}).
-- "title", "summary", "heading", "narration", "keyTakeaway", "keyTakeaways" and EVERY on-board "text", "label" and "caption" value MUST be written in ${language.nativeName}.
-- Keep widely recognised technical terms and proper nouns in their original form where no accepted translation exists, but keep all surrounding prose in ${language.nativeName}.
-- Keep the JSON keys themselves in English. Only the human-readable values are translated.
-- The narration is read aloud by a ${language.speechLang} speech synthesiser, so write naturally spoken sentences and spell numbers and symbols out as words.`;
-}
-
 export function buildLessonSystemPrompt(options: PromptOptions = {}): string {
   const level = resolveLevel(options.level);
 
@@ -58,8 +40,6 @@ export function buildLessonSystemPrompt(options: PromptOptions = {}): string {
 Your mission is to teach the user's requested topic with deep pedagogical clarity, inspiring spoken storytelling, and rich, beautifully arranged vector diagram architecture on a 1000x600 digital porcelain whiteboard.
 
 ${LEVEL_DIRECTIVES[level]}
-
-${languageDirective(options.language)}
 
 ### HOW A REAL TEACHER SPEAKS (narration rules)
 - Write narration to be SPOKEN, not read. Short sentences. One idea per sentence.
@@ -123,13 +103,7 @@ Chapters: 4 to 6, each building on the last, about 120 seconds of speech in tota
 }
 
 export function buildFollowupSystemPrompt(options: PromptOptions = {}): string {
-  const language = getLanguageByCode(options.language || "en");
   const level = resolveLevel(options.level);
-
-  const languageLine =
-    language.code === "en"
-      ? "Answer in English."
-      : `Answer entirely in ${language.name} (${language.nativeName}), matching the language the lesson was taught in.`;
 
   const depthLine: Record<LearningLevel, string> = {
     beginner: "Keep it intuitive and analogy-led, and define any term you introduce.",
@@ -150,8 +124,7 @@ Your goal:
 1. Answer directly, clearly, warmly, and encouragement-oriented.
 2. Connect back to the visual concepts and diagrams drawn on the smartboard.
 3. ${depthLine[level]}
-4. ${languageLine}
-5. Keep the answer concise (2 to 3 paragraphs).
+4. Keep the answer concise (2 to 3 paragraphs).
 `;
 }
 

@@ -12,7 +12,6 @@ export interface LessonCacheKeyParts {
   topic: string;
   model?: string;
   level?: string;
-  language?: string;
 }
 
 interface CacheEntry {
@@ -26,9 +25,9 @@ interface CacheEntry {
  * In-memory TTL + LRU cache with request deduplication.
  *
  * Reduces NVIDIA NIM API cost by serving identical requests instantly. The key
- * covers the model, learning level and language as well as the topic, so two
- * users asking for the same topic at different depths (or with a different
- * model selected) never receive each other's lesson.
+ * covers the model and learning level as well as the topic, so two users
+ * asking for the same topic at different depths (or with a different model
+ * selected) never receive each other's lesson.
  *
  * Only genuinely AI-generated lessons are stored. Fallback lessons are never
  * cached, otherwise a single transient upstream failure would pin a generic
@@ -54,13 +53,12 @@ class LessonCache {
       .trim();
   }
 
-  /** Full cache key: topic + model + level + language. */
+  /** Full cache key: topic + model + level. */
   public buildKey(parts: LessonCacheKeyParts): string {
     return [
       this.normalizeTopicKey(parts.topic),
       (parts.model || "default").toLowerCase(),
       (parts.level || "beginner").toLowerCase(),
-      (parts.language || "en").toLowerCase(),
     ].join("::");
   }
 

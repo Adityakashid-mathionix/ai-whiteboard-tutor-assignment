@@ -7,8 +7,6 @@ export interface AIProviderOptions {
   baseUrl?: string;
   /** Curriculum depth: beginner | intermediate | advanced. */
   level?: string;
-  /** ISO language code the lesson should be taught in. */
-  language?: string;
 }
 
 export interface QuestionContext {

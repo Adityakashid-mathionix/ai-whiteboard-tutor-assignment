@@ -3,17 +3,16 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2, Pencil } from "lucide-react";
-import { LEARNING_LEVELS, SUPPORTED_LANGUAGES } from "@/lib/languages";
+import { LEARNING_LEVELS } from "@/lib/learning-levels";
 
 interface TopicInputProps {
-  onGenerate?: (topic: string, level: string, language: string) => void;
+  onGenerate?: (topic: string, level: string) => void;
   isLoading?: boolean;
 }
 
 export const TopicInput: React.FC<TopicInputProps> = ({ onGenerate, isLoading = false }) => {
   const [topic, setTopic] = useState("");
   const [level, setLevel] = useState("beginner");
-  const [language, setLanguage] = useState("en");
   const router = useRouter();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -21,11 +20,11 @@ export const TopicInput: React.FC<TopicInputProps> = ({ onGenerate, isLoading = 
     if (!topic.trim() || isLoading) return;
 
     if (onGenerate) {
-      onGenerate(topic.trim(), level, language);
+      onGenerate(topic.trim(), level);
       return;
     }
 
-    const params = new URLSearchParams({ topic: topic.trim(), level, lang: language });
+    const params = new URLSearchParams({ topic: topic.trim(), level });
     router.push(`/studio?${params.toString()}`);
   };
 
@@ -87,25 +86,6 @@ export const TopicInput: React.FC<TopicInputProps> = ({ onGenerate, isLoading = 
           </div>
         </div>
 
-        <span className="hidden h-4 w-px bg-border sm:block" />
-
-        <div className="flex items-center gap-2">
-          <label htmlFor="lesson-language" className="eyebrow">
-            language
-          </label>
-          <select
-            id="lesson-language"
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            className="rounded-full border border-border bg-paper px-3 py-1 font-mono text-[11px] text-foreground focus:border-electric focus:outline-none"
-          >
-            {SUPPORTED_LANGUAGES.map((lang) => (
-              <option key={lang.code} value={lang.code}>
-                {lang.flag} {lang.nativeName}
-              </option>
-            ))}
-          </select>
-        </div>
       </div>
     </div>
   );

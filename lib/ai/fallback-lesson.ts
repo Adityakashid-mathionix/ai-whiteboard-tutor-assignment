@@ -5,7 +5,6 @@ import { normalizeLessonJson } from "./normalize-lesson";
 export interface FallbackLessonOptions {
   visualAssets?: EducationalVisualAsset[];
   level?: string;
-  language?: string;
 }
 
 /**
@@ -23,7 +22,7 @@ export function createSynthesizedLesson(
   options: FallbackLessonOptions = {}
 ): Lesson {
   const cleanTopic = topic.trim();
-  const { visualAssets = [], level, language } = options;
+  const { visualAssets = [], level } = options;
 
   const rawJson = {
     title: `${cleanTopic}: Study Outline`,
@@ -58,7 +57,6 @@ export function createSynthesizedLesson(
     topic: cleanTopic,
     visualAssets,
     level,
-    language,
   });
 
   return LessonSchema.parse(normalized) as Lesson;
