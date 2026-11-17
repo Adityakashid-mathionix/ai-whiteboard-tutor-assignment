@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Lesson } from "@/types/lesson";
+import type { LessonSource } from "@/lib/cache/lesson-cache";
 import { useLessonPlayer } from "@/hooks/useLessonPlayer";
 import { Whiteboard } from "./Whiteboard";
 import { LessonOutline } from "./LessonOutline";
@@ -11,25 +12,29 @@ import { PlaybackControls } from "./PlaybackControls";
 import { SettingsModal } from "./SettingsModal";
 import confetti from "canvas-confetti";
 import {
-  Sparkles,
   ArrowLeft,
   Settings,
   Layers,
   GraduationCap,
   Monitor,
-  Command,
   Maximize2,
+  TriangleAlert,
 } from "lucide-react";
 
 interface TeachingStudioProps {
   initialLesson: Lesson;
+  /** Where this lesson came from; "fallback" is surfaced to the student. */
+  source?: LessonSource;
 }
 
-export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson }) => {
-  const [apiKey, setApiKey] = useState<string>("");
-  const [selectedModel, setSelectedModel] = useState<string>("nvidia/nemotron-3.5-lightning-30b-a3b");
-  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-  const [isFocusMode, setIsFocusMode] = useState<boolean>(false);
+export const TeachingStudio: React.FC<TeachingStudioProps> = ({
+  initialLesson,
+  source = "ai",
+}) => {
+  const [apiKey, setApiKey] = useState("");
+  const [selectedModel, setSelectedModel] = useState("nvidia/nemotron-3.5-lightning-30b-a3b");
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isFocusMode, setIsFocusMode] = useState(false);
   const [mobileTab, setMobileTab] = useState<"whiteboard" | "outline" | "tutor">("whiteboard");
 
   useEffect(() => {
@@ -38,262 +43,221 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
       const storedModel = localStorage.getItem("braynix_nvidia_model");
       if (storedKey) setApiKey(storedKey);
       if (storedModel) setSelectedModel(storedModel);
-    } catch {}
+    } catch {
+      // Storage blocked: the server key is used instead.
+    }
   }, []);
 
   const handleSaveApiKey = (newKey: string) => {
     setApiKey(newKey);
     try {
       localStorage.setItem("braynix_nvidia_key", newKey);
-    } catch {}
+    } catch {
+      // Nothing to persist to; the key still applies for this session.
+    }
   };
 
   const handleSaveModel = (newModel: string) => {
     setSelectedModel(newModel);
     try {
       localStorage.setItem("braynix_nvidia_model", newModel);
-    } catch {}
+    } catch {
+      // As above.
+    }
   };
 
-  const onLessonComplete = () => {
+  const onLessonComplete = useCallback(() => {
     try {
       confetti({
-        particleCount: 100,
-        spread: 75,
+        particleCount: 90,
+        spread: 70,
         origin: { y: 0.6 },
-        colors: ["#1677ff", "#00d2ff", "#00b875", "#ffaa00"],
+        colors: ["#1677ff", "#059669", "#d97706", "#7c3aed"],
       });
-    } catch {}
-  };
+    } catch {
+      // Confetti is decorative only.
+    }
+  }, []);
 
-  const player = useLessonPlayer({
-    lesson: initialLesson,
-    onLessonComplete,
-  });
+  const player = useLessonPlayer({ lesson: initialLesson, onLessonComplete });
+
+  const { status, currentSegmentIndex, totalSegments, isMuted } = player;
+  const { play, pause, resume, seekToSegment, setIsMuted } = player;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        document.activeElement?.tagName === "INPUT" ||
-        document.activeElement?.tagName === "TEXTAREA"
-      ) {
-        return;
-      }
+      const tag = document.activeElement?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
 
       if (e.code === "Space") {
         e.preventDefault();
-        if (player.status === "playing") player.pause();
-        else if (player.status === "paused") player.resume();
-        else player.play();
-      } else if (e.code === "ArrowLeft") {
+        if (status === "playing") pause();
+        else if (status === "paused") resume();
+        else play();
+      } else if (e.code === "ArrowLeft" && currentSegmentIndex > 0) {
         e.preventDefault();
-        if (player.currentSegmentIndex > 0) {
-          player.seekToSegment(player.currentSegmentIndex - 1);
-        }
-      } else if (e.code === "ArrowRight") {
+        seekToSegment(currentSegmentIndex - 1);
+      } else if (e.code === "ArrowRight" && currentSegmentIndex < totalSegments - 1) {
         e.preventDefault();
-        if (player.currentSegmentIndex < player.totalSegments - 1) {
-          player.seekToSegment(player.currentSegmentIndex + 1);
-        }
+        seekToSegment(currentSegmentIndex + 1);
       } else if (e.code === "KeyM") {
         e.preventDefault();
-        player.setIsMuted(!player.isMuted);
+        setIsMuted(!isMuted);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [player]);
+  }, [currentSegmentIndex, isMuted, pause, play, resume, seekToSegment, setIsMuted, status, totalSegments]);
+
+  const tabs = [
+    { id: "whiteboard" as const, label: "Board", Icon: Monitor },
+    { id: "outline" as const, label: `Chapters (${initialLesson.segments.length})`, Icon: Layers },
+    { id: "tutor" as const, label: "Notes & Q&A", Icon: GraduationCap },
+  ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#f8f9fb] text-[#0d0e11] selection:bg-[#1677ff]/15 selection:text-[#1677ff] editorial-desk-grid">
-      {/* Studio Top Navigation Bar */}
-      <header className="flex items-center justify-between px-4 sm:px-6 py-3 bg-white/95 border-b border-[#e5e7eb] backdrop-blur-md sticky top-0 z-40 shadow-xs">
-        <div className="flex items-center space-x-3.5">
+    <div className="desk-grid flex min-h-screen flex-col bg-background text-foreground">
+      <header className="sticky top-0 z-40 flex items-center justify-between gap-4 border-b border-border bg-background/90 px-4 py-2.5 backdrop-blur-md sm:px-6">
+        <div className="flex min-w-0 items-center gap-3">
           <Link
             href="/"
-            className="flex items-center space-x-1.5 text-xs font-mono text-neutral-600 hover:text-[#0d0e11] px-3 py-1.5 rounded-full hover:bg-neutral-100 border border-neutral-200 transition-all duration-200 active:scale-95"
+            className="btn-interactive flex items-center gap-1.5 rounded-full border border-border bg-paper px-3 py-1.5 font-mono text-xs text-muted-foreground hover:text-foreground"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Back to Topics</span>
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">topics</span>
           </Link>
 
-          <div className="h-4 w-px bg-neutral-200" />
+          <span className="hidden h-4 w-px bg-border sm:block" />
 
-          <div className="flex items-center space-x-2.5">
-            <div className="grid h-8 w-8 place-items-center rounded-xl bg-electric/10 font-mono text-xs font-bold text-electric ring-1 ring-electric/30 shadow-xs">
-              BX
-            </div>
-            <div>
-              <span className="text-xs font-bold tracking-tight text-[#0d0e11] block leading-none font-sans">
-                Braynix Studio
-              </span>
-              <span className="text-[10px] text-neutral-500 font-mono leading-none">
-                Interactive Smartboard
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Current Topic Badge */}
-        <div className="hidden md:flex items-center space-x-2 px-4 py-1.5 rounded-full bg-white border border-[#e2e5eb] text-xs shadow-xs">
-          <span className="w-2 h-2 rounded-full bg-electric animate-pulse" />
-          <span className="text-neutral-800 font-semibold font-serif italic truncate max-w-sm text-sm">
+          <span className="handwritten hidden truncate text-xl leading-none md:block">
             {initialLesson.title}
           </span>
         </div>
 
-        {/* Studio Actions */}
-        <div className="flex items-center space-x-2">
-          {/* Cinema / Focus View Toggle */}
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setIsFocusMode(!isFocusMode)}
-            title={isFocusMode ? "Exit Cinema View" : "Cinema View (Expands Whiteboard)"}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-mono transition-all border shadow-xs active:scale-95 ${
+            onClick={() => setIsFocusMode((v) => !v)}
+            title={isFocusMode ? "Show side panels" : "Expand the board"}
+            className={`btn-interactive flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono text-xs ${
               isFocusMode
-                ? "bg-[#1677ff] text-white border-[#1677ff] shadow-sm font-semibold"
-                : "bg-white text-neutral-700 hover:text-[#121316] border-neutral-200 hover:bg-neutral-50"
+                ? "border-electric bg-electric text-white"
+                : "border-border bg-paper text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Maximize2 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline font-medium">
-              {isFocusMode ? "Standard View" : "Cinema View"}
-            </span>
+            <Maximize2 className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">{isFocusMode ? "standard" : "focus"}</span>
           </button>
-
-          {/* Keyboard shortcut hint */}
-          <div className="hidden lg:flex items-center space-x-1 text-[11px] font-mono text-neutral-500 bg-neutral-100 px-3 py-1 rounded-full border border-neutral-200">
-            <Command className="w-3 h-3 text-neutral-400" />
-            <span>Space: Play</span>
-          </div>
 
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-neutral-50 text-xs font-mono text-neutral-700 hover:text-[#0d0e11] border border-neutral-200 transition-all shadow-xs active:scale-95"
+            className="btn-interactive flex items-center gap-1.5 rounded-full border border-border bg-paper px-3 py-1.5 font-mono text-xs text-muted-foreground hover:text-foreground"
           >
-            <Settings className="w-3.5 h-3.5 text-electric" />
-            <span className="hidden sm:inline font-medium">Settings</span>
+            <Settings className="h-3.5 w-3.5 text-electric" />
+            <span className="hidden sm:inline">settings</span>
           </button>
         </div>
       </header>
 
-      {/* Mobile Tab Navigation Bar */}
-      <div className="lg:hidden flex border-b border-[#e5e7eb] bg-white px-3 py-2 space-x-2 shadow-xs sticky top-[57px] z-30">
-        <button
-          onClick={() => setMobileTab("whiteboard")}
-          className={`flex-1 py-2 rounded-xl text-xs font-mono flex items-center justify-center space-x-1.5 transition-all duration-200 ${
-            mobileTab === "whiteboard"
-              ? "bg-electric text-white shadow-sm font-semibold"
-              : "text-neutral-600 hover:text-[#0d0e11] bg-neutral-50"
-          }`}
-        >
-          <Monitor className="w-3.5 h-3.5" />
-          <span>Smartboard</span>
-        </button>
-        <button
-          onClick={() => setMobileTab("outline")}
-          className={`flex-1 py-2 rounded-xl text-xs font-mono flex items-center justify-center space-x-1.5 transition-all duration-200 ${
-            mobileTab === "outline"
-              ? "bg-electric text-white shadow-sm font-semibold"
-              : "text-neutral-600 hover:text-[#0d0e11] bg-neutral-50"
-          }`}
-        >
-          <Layers className="w-3.5 h-3.5" />
-          <span>Chapters ({initialLesson.segments.length})</span>
-        </button>
-        <button
-          onClick={() => setMobileTab("tutor")}
-          className={`flex-1 py-2 rounded-xl text-xs font-mono flex items-center justify-center space-x-1.5 transition-all duration-200 ${
-            mobileTab === "tutor"
-              ? "bg-electric text-white shadow-sm font-semibold"
-              : "text-neutral-600 hover:text-[#0d0e11] bg-neutral-50"
-          }`}
-        >
-          <GraduationCap className="w-3.5 h-3.5" />
-          <span>Notes & Q&A</span>
-        </button>
+      {/* Honest provenance: a template outline is never shown as a real lesson. */}
+      {source === "fallback" && (
+        <div className="flex items-start gap-2.5 border-b border-[#d97706]/30 bg-sticky-yellow/60 px-4 py-2.5 sm:px-6">
+          <TriangleAlert className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#92400e]" />
+          <p className="text-[13px] leading-snug text-[#6b3f06]">
+            <strong className="font-semibold">This is a generic outline, not a generated lesson.</strong>{" "}
+            The AI tutor could not be reached, so the studio built a structural placeholder.
+            Add your own NVIDIA key in settings, or retry in a moment.
+          </p>
+        </div>
+      )}
+
+      {player.errorMessage && (
+        <div className="border-b border-border bg-paper px-4 py-2 text-[13px] text-muted-foreground sm:px-6">
+          {player.errorMessage}
+        </div>
+      )}
+
+      {/* Mobile section tabs */}
+      <div className="sticky top-[49px] z-30 flex gap-2 border-b border-border bg-paper px-3 py-2 lg:hidden">
+        {tabs.map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            onClick={() => setMobileTab(id)}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 font-mono text-[11px] transition-colors ${
+              mobileTab === id ? "bg-electric text-white" : "bg-muted text-muted-foreground"
+            }`}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {label}
+          </button>
+        ))}
       </div>
 
-      {/* Responsive Teaching Studio Layout with Cinema Mode */}
-      <main className="flex-1 p-3 sm:p-4 lg:p-5 grid grid-cols-1 lg:grid-cols-12 gap-4 max-w-[1780px] mx-auto w-full">
-        {/* LEFT COLUMN: Lesson Outline (Hidden in Cinema Mode) */}
+      <main className="mx-auto grid w-full max-w-[1760px] flex-1 grid-cols-1 gap-4 p-3 sm:p-4 lg:grid-cols-12 lg:p-5">
         {!isFocusMode && (
           <section
-            className={`lg:col-span-3 h-[520px] lg:h-[calc(100vh-130px)] ${
+            className={`h-[520px] lg:col-span-3 lg:h-[calc(100vh-130px)] ${
               mobileTab === "outline" ? "block" : "hidden lg:block"
             }`}
           >
             <LessonOutline
               lesson={initialLesson}
-              currentSegmentIndex={player.currentSegmentIndex}
-              status={player.status}
-              onSelectSegment={(idx) => player.seekToSegment(idx)}
+              currentSegmentIndex={currentSegmentIndex}
+              status={status}
+              onSelectSegment={seekToSegment}
             />
           </section>
         )}
 
-        {/* CENTER COLUMN: Whiteboard & Playback Controls (Expands in Cinema Mode) */}
         <section
-          className={`${
-            isFocusMode
-              ? "lg:col-span-12 max-w-6xl mx-auto w-full"
-              : "lg:col-span-6"
-          } flex flex-col space-y-3.5 h-[calc(100vh-130px)] min-h-[540px] transition-all duration-300 ${
-            mobileTab === "whiteboard" ? "flex" : "hidden lg:flex"
-          }`}
+          className={`flex h-[calc(100vh-130px)] min-h-[540px] flex-col gap-3.5 transition-all duration-300 ${
+            isFocusMode ? "mx-auto w-full max-w-6xl lg:col-span-12" : "lg:col-span-6"
+          } ${mobileTab === "whiteboard" ? "flex" : "hidden lg:flex"}`}
         >
-          {/* Main Whiteboard Canvas */}
-          <div className="flex-1 min-h-0">
+          <div className="min-h-0 flex-1">
             <Whiteboard
               actions={player.whiteboard.actions}
-              status={player.status}
+              status={status}
               currentSegmentHeading={player.currentSegment?.heading}
               currentSegmentNarration={player.currentSegment?.narration}
+              narrationProgress={player.speech.progress}
               zoom={player.whiteboard.zoom}
               showGrid={player.whiteboard.showGrid}
-              onZoomIn={() =>
-                player.whiteboard.setZoom((z) => Math.min(1.5, z + 0.15))
-              }
-              onZoomOut={() =>
-                player.whiteboard.setZoom((z) => Math.max(0.75, z - 0.15))
-              }
-              onResetZoom={() => player.whiteboard.resetZoom()}
-              onToggleGrid={() =>
-                player.whiteboard.setShowGrid((g) => !g)
-              }
+              onZoomIn={() => player.whiteboard.setZoom((z) => Math.min(1.5, z + 0.15))}
+              onZoomOut={() => player.whiteboard.setZoom((z) => Math.max(0.75, z - 0.15))}
+              onResetZoom={player.whiteboard.resetZoom}
+              onToggleGrid={() => player.whiteboard.setShowGrid((g) => !g)}
             />
           </div>
 
-          {/* Bottom Playback Controls */}
           <PlaybackControls
-            status={player.status}
-            currentSegmentIndex={player.currentSegmentIndex}
-            totalSegments={player.totalSegments}
+            status={status}
+            currentSegmentIndex={currentSegmentIndex}
+            totalSegments={totalSegments}
             segments={initialLesson.segments}
             speed={player.speed}
-            isMuted={player.isMuted}
-            onPlay={player.play}
-            onPause={player.pause}
-            onResume={player.resume}
+            isMuted={isMuted}
+            onPlay={play}
+            onPause={pause}
+            onResume={resume}
             onRestart={player.restart}
-            onSeek={player.seekToSegment}
+            onSeek={seekToSegment}
             onSetSpeed={player.setSpeed}
-            onToggleMute={() => player.setIsMuted(!player.isMuted)}
+            onToggleMute={() => setIsMuted(!isMuted)}
           />
         </section>
 
-        {/* RIGHT COLUMN: AI Tutor Panel & Q&A (Hidden in Cinema Mode) */}
         {!isFocusMode && (
           <section
-            className={`lg:col-span-3 h-[520px] lg:h-[calc(100vh-130px)] ${
+            className={`h-[520px] lg:col-span-3 lg:h-[calc(100vh-130px)] ${
               mobileTab === "tutor" ? "block" : "hidden lg:block"
             }`}
           >
             <TutorPanel
               lesson={initialLesson}
               currentSegment={player.currentSegment}
-              currentSegmentIndex={player.currentSegmentIndex}
-              status={player.status}
+              currentSegmentIndex={currentSegmentIndex}
+              status={status}
               apiKey={apiKey}
               model={selectedModel}
             />
@@ -301,7 +265,6 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
         )}
       </main>
 
-      {/* Settings Modal */}
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}

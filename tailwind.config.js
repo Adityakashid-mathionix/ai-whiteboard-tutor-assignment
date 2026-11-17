@@ -1,3 +1,8 @@
+/**
+ * Design tokens ported from the Braynix / Aditya Kashid portfolio system:
+ * a warm paper desk surface, handwritten Caveat display type, JetBrains Mono
+ * eyebrows, Newsreader prose and a single electric blue accent.
+ */
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ["class"],
@@ -10,91 +15,82 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Clean white & light editorial desk palette
-        background: "#ffffff",
-        foreground: "#0d0e11",
-        desk: {
-          base: "#f8f9fb",
-          surface: "#ffffff",
-          card: "#ffffff",
-          elevated: "#f4f5f8",
-          border: "#e2e5eb",
-          "border-subtle": "rgba(0, 0, 0, 0.06)",
+        // Warm paper desk surface
+        background: "#f7f5f1",
+        foreground: "#1b1b1b",
+        paper: {
+          DEFAULT: "#ffffff",
+          warm: "#fcfaf6",
+          sunk: "#f2f0ec",
         },
-        // Signature electric cobalt
+        border: {
+          DEFAULT: "#e0ddda",
+          strong: "#dad7d3",
+        },
+        muted: {
+          DEFAULT: "#edebe7",
+          foreground: "#575552",
+        },
+        secondary: "#eeebe5",
+        steel: "#393e42",
+        destructive: "#c9302d",
+
+        // Signature electric cobalt, used sparingly
         electric: {
           DEFAULT: "#1677ff",
           hover: "#0958d9",
           light: "#e6f4ff",
           glow: "rgba(22, 119, 255, 0.25)",
         },
-        "neon-cyan": "#00b4d8",
-        // Sticky note colors
+
+        // Physical desk objects
         sticky: {
-          yellow: "#fef9c3",
-          mint: "#dcfce7",
-          pink: "#fce7f3",
-          blue: "#e0f2fe",
+          yellow: "#ffefb1",
+          blue: "#cfe8fe",
+          mint: "#d3edd7",
+          pink: "#fedbda",
+          beige: "#ecdbc5",
         },
-        // Smartboard porcelain canvas
-        whiteboard: {
+        tape: "#d5cdc0",
+
+        // Whiteboard ink palette (shared with the SVG renderer)
+        board: {
           canvas: "#ffffff",
-          grid: "rgba(0, 0, 0, 0.05)",
-          pen: "#0d0e11",
+          grid: "rgba(27, 27, 27, 0.05)",
+          ink: "#1b1b1b",
           blue: "#1677ff",
-          cyan: "#00a8e8",
-          emerald: "#00b875",
-          amber: "#e68a00",
-          rose: "#e62e4d",
+          cyan: "#0284c7",
+          emerald: "#059669",
+          amber: "#d97706",
+          rose: "#dc2626",
+          violet: "#7c3aed",
         },
       },
       fontFamily: {
-        sans: [
-          "Inter",
-          "-apple-system",
-          "BlinkMacSystemFont",
-          "Segoe UI",
-          "sans-serif",
-        ],
-        serif: [
-          "Newsreader",
-          "Georgia",
-          "Times New Roman",
-          "serif",
-        ],
-        newsreader: [
-          "Newsreader",
-          "Georgia",
-          "serif",
-        ],
-        mono: [
-          "JetBrains Mono",
-          "ui-monospace",
-          "SFMono-Regular",
-          "monospace",
-        ],
-        caveat: [
-          "Caveat",
-          "cursive",
-        ],
-        handwritten: [
-          "Caveat",
-          "cursive",
-        ],
+        sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+        serif: ["Newsreader", "Georgia", "Times New Roman", "serif"],
+        mono: ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "monospace"],
+        display: ["Caveat", "Kalam", "cursive"],
+        handwritten: ["Caveat", "Kalam", "cursive"],
+      },
+      letterSpacing: {
+        eyebrow: "0.22em",
+      },
+      borderRadius: {
+        DEFAULT: "0.5rem",
+        card: "0.75rem",
       },
       boxShadow: {
-        paper: "0 1px 3px rgba(0,0,0,0.06), 0 4px 14px rgba(0,0,0,0.04)",
-        lift: "0 8px 30px rgba(0,0,0,0.08)",
-        sticky: "0 6px 20px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.05)",
-        electric: "0 0 20px rgba(22, 119, 255, 0.25)",
-        smartboard: "0 10px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04)",
+        paper: "0 1px 2px rgba(60,52,40,0.06), 0 6px 16px -4px rgba(60,52,40,0.10)",
+        lift: "0 2px 4px rgba(60,52,40,0.08), 0 14px 28px -6px rgba(60,52,40,0.16)",
+        sticky: "0 1px 1px rgba(60,52,40,0.08), 0 8px 14px -6px rgba(60,52,40,0.22)",
+        electric: "0 0 0 1px rgba(22,119,255,0.35), 0 10px 24px -10px rgba(22,119,255,0.40)",
+        board: "0 2px 4px rgba(60,52,40,0.08), 0 18px 40px -12px rgba(60,52,40,0.22)",
       },
       animation: {
         "float-gentle": "floatGentle 4s ease-in-out infinite",
         "pulse-glow": "pulseGlow 2.5s ease-in-out infinite",
-        "equalizer-1": "equalizer 0.8s ease-in-out infinite alternate",
-        "equalizer-2": "equalizer 0.6s ease-in-out infinite alternate 0.2s",
-        "equalizer-3": "equalizer 0.9s ease-in-out infinite alternate 0.4s",
+        "chalk-in": "chalkIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both",
       },
       keyframes: {
         floatGentle: {
@@ -105,9 +101,9 @@ module.exports = {
           "0%, 100%": { opacity: 0.7, transform: "scale(1)" },
           "50%": { opacity: 1, transform: "scale(1.02)" },
         },
-        equalizer: {
-          "0%": { height: "4px" },
-          "100%": { height: "18px" },
+        chalkIn: {
+          "0%": { opacity: 0, transform: "translateY(4px)" },
+          "100%": { opacity: 1, transform: "translateY(0)" },
         },
       },
     },
