@@ -2,6 +2,11 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { PlaybackSpeed } from "@/types/lesson";
+import {
+  DEFAULT_VOICE_STYLE,
+  getVoiceStyle,
+  VoiceStyleId,
+} from "@/lib/voice-presets";
 
 interface UseSpeechOptions {
   onStart?: () => void;
@@ -15,8 +20,9 @@ interface UseSpeechOptions {
  * Voice ranking, most natural first. Patterns are matched inside the language
  * the lesson is taught in, so a Hindi lesson never gets read by an English voice.
  */
-/** Where a hand-picked voice is remembered between visits. */
+/** Where a hand-picked voice and style are remembered between visits. */
 const VOICE_STORAGE_KEY = "braynix_voice_name";
+const STYLE_STORAGE_KEY = "braynix_voice_style";
 
 function readSavedVoiceName(): string | null {
   try {
@@ -68,6 +74,7 @@ export function useSpeech({
   const [isPaused, setIsPaused] = useState(false);
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
+  const [voiceStyle, setVoiceStyleState] = useState<VoiceStyleId>(DEFAULT_VOICE_STYLE);
   /** 0 → 1 through the current narration; drives the board's drawing reveal. */
   const [progress, setProgress] = useState(0);
 
@@ -107,6 +114,13 @@ export function useSpeech({
         return selectBestVoice(voices, speechLang);
       });
     };
+
+    try {
+      const savedStyle = localStorage.getItem(STYLE_STORAGE_KEY);
+      if (savedStyle) setVoiceStyleState(getVoiceStyle(savedStyle).id);
+    } catch {
+      // Storage blocked: the default style applies.
+    }
 
     loadVoices();
     window.speechSynthesis.onvoiceschanged = loadVoices;
@@ -167,13 +181,23 @@ export function useSpeech({
       );
       if (voice) sample.voice = voice;
       sample.lang = voice?.lang || speechLang;
-      sample.rate = Math.max(0.6, Math.min(speed * 0.95, 2));
-      sample.pitch = 1.03;
+      const style = getVoiceStyle(voiceStyle);
+      sample.rate = Math.max(0.5, Math.min(speed * style.rate, 2));
+      sample.pitch = Math.max(0.5, Math.min(style.pitch, 2));
 
       window.speechSynthesis.speak(sample);
     },
-    [speechLang, speed]
+    [speechLang, speed, voiceStyle]
   );
+
+  const setVoiceStyle = useCallback((id: VoiceStyleId) => {
+    setVoiceStyleState(id);
+    try {
+      localStorage.setItem(STYLE_STORAGE_KEY, id);
+    } catch {
+      // Storage blocked: the choice still holds for this session.
+    }
+  }, []);
 
   /** Simulated playback used when muted or when speech synthesis is absent. */
   const runSilentPlayback = useCallback(
@@ -225,9 +249,10 @@ export function useSpeech({
       if (selectedVoice) utterance.voice = selectedVoice;
       utterance.lang = selectedVoice?.lang || speechLang;
 
-      // Slightly under the nominal rate reads as calmer and more teacher-like.
-      utterance.rate = Math.max(0.6, Math.min(speed * 0.95, 2));
-      utterance.pitch = 1.03;
+      // The chosen style shapes delivery on top of the player's speed.
+      const style = getVoiceStyle(voiceStyle);
+      utterance.rate = Math.max(0.5, Math.min(speed * style.rate, 2));
+      utterance.pitch = Math.max(0.5, Math.min(style.pitch, 2));
       utterance.volume = 1;
 
       utterance.onstart = () => {
@@ -268,7 +293,7 @@ export function useSpeech({
 
       window.speechSynthesis.speak(utterance);
     },
-    [isMuted, isSupported, onEnd, onError, onStart, runSilentPlayback, selectedVoice, speechLang, speed, stop]
+    [isMuted, isSupported, onEnd, onError, onStart, runSilentPlayback, selectedVoice, speechLang, speed, stop, voiceStyle]
   );
 
   const pause = useCallback(() => {
@@ -319,6 +344,8 @@ export function useSpeech({
     selectedVoice,
     setSelectedVoice: pickVoice,
     previewVoice,
+    voiceStyle,
+    setVoiceStyle,
     speak,
     pause,
     resume,

@@ -276,6 +276,8 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({
         selectedVoice={player.speech.selectedVoice}
         onSelectVoice={player.speech.setSelectedVoice}
         onPreviewVoice={player.speech.previewVoice}
+        voiceStyle={player.speech.voiceStyle}
+        onSelectVoiceStyle={player.speech.setVoiceStyle}
       />
     </div>
   );

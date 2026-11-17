@@ -2,6 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import { Check, ExternalLink, Key, Mic2, Play, X } from "lucide-react";
+import {
+  groupVoices,
+  isHighQualityVoiceName,
+  VOICE_STYLES,
+  VoiceStyleId,
+} from "@/lib/voice-presets";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -15,6 +21,9 @@ interface SettingsModalProps {
   selectedVoice: SpeechSynthesisVoice | null;
   onSelectVoice: (voice: SpeechSynthesisVoice | null) => void;
   onPreviewVoice: (voice: SpeechSynthesisVoice | null) => void;
+  /** Speaking style applied on top of the chosen voice. */
+  voiceStyle: VoiceStyleId;
+  onSelectVoiceStyle: (style: VoiceStyleId) => void;
 }
 
 const MODELS = [
@@ -68,6 +77,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   selectedVoice,
   onSelectVoice,
   onPreviewVoice,
+  voiceStyle,
+  onSelectVoiceStyle,
 }) => {
   const [localKey, setLocalKey] = useState(apiKey);
   const [localModel, setLocalModel] = useState(selectedModel);
@@ -149,17 +160,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     onSelectVoice(voice);
                     onPreviewVoice(voice);
                   }}
+                  aria-label="Narration voice"
                   className="min-w-0 flex-1 rounded-lg border border-border bg-paper-warm px-3 py-2 text-[13px] text-foreground focus:border-electric focus:outline-none"
                 >
-                  {voiceList.map((voice) => {
-                    const quality = voiceQuality(voice);
-                    return (
-                      <option key={voice.name} value={voice.name}>
-                        {shortVoiceName(voice)}
-                        {quality ? ` · ${quality}` : ""} ({voice.lang})
-                      </option>
-                    );
-                  })}
+                  {groupVoices(voiceList).map((group) => (
+                    <optgroup key={group.label} label={group.label}>
+                      {group.voices.map((voice) => {
+                        const quality = voiceQuality(voice);
+                        return (
+                          <option key={voice.name} value={voice.name}>
+                            {shortVoiceName(voice)}
+                            {quality ? ` · ${quality}` : ""}
+                          </option>
+                        );
+                      })}
+                    </optgroup>
+                  ))}
                 </select>
 
                 <button
@@ -172,10 +188,37 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </button>
               </div>
 
-              <p className="mt-2 text-[12px] leading-snug text-muted-foreground">
-                Voices come from your own device, so the list differs per browser. The ones
-                marked <span className="font-mono text-[11px]">natural</span> sound closest
-                to a person. Your choice is remembered.
+              {/* Speaking style: rate and pitch change delivery far more than the
+                  voice list suggests, so they are offered as named styles. */}
+              <p className="eyebrow mt-4">speaking style</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {VOICE_STYLES.map((style) => (
+                  <button
+                    key={style.id}
+                    title={style.desc}
+                    onClick={() => {
+                      onSelectVoiceStyle(style.id);
+                      onPreviewVoice(selectedVoice);
+                    }}
+                    className={`rounded-full px-3 py-1 font-mono text-[11px] transition-colors ${
+                      voiceStyle === style.id
+                        ? "bg-electric text-white"
+                        : "border border-border bg-paper text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {style.label}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1.5 text-[12px] leading-snug text-muted-foreground">
+                {VOICE_STYLES.find((s) => s.id === voiceStyle)?.desc}
+              </p>
+
+              <p className="mt-3 text-[12px] leading-snug text-muted-foreground">
+                Voices come from your own device, so the list differs per browser and is
+                grouped by accent. The ones marked{" "}
+                <span className="font-mono text-[11px]">natural</span> sound closest to a
+                person. Both choices are remembered.
               </p>
             </>
           )}
