@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { TopicInput } from "@/components/chat/TopicInput";
+import { TopicChat } from "@/components/chat/TopicChat";
 import { SuggestedTopics } from "@/components/chat/SuggestedTopics";
 import { Mic2, PenLine, MessagesSquare } from "lucide-react";
 
@@ -48,26 +48,23 @@ export default function HomePage() {
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 sm:px-8">
         {/* Hero */}
-        <section className="py-16 text-center sm:py-20">
-          <p className="eyebrow">ai whiteboard tutor</p>
-          <h1 className="display-hand mt-3 text-6xl leading-[0.95] sm:text-8xl">
-            Learn it like someone
-            <br />
-            is teaching you.
-          </h1>
-
-          <p className="prose-paper mx-auto mt-6 max-w-2xl">
-            Type any topic. A tutor plans the lesson, speaks it aloud, and draws the diagram
-            that actually explains it — step by step, on a board you can scribble on.
-          </p>
-
-          <div className="mt-9">
-            <TopicInput />
+        <section className="py-12 sm:py-16">
+          <div className="text-center">
+            <p className="eyebrow">ai whiteboard tutor</p>
+            <h1 className="display-hand mt-3 text-5xl leading-[0.95] sm:text-7xl">
+              Learn it like someone
+              <br />
+              is teaching you.
+            </h1>
+            <p className="prose-paper mx-auto mt-5 max-w-xl text-[15px]">
+              Tell the tutor what you want to understand. It plans the lesson, speaks it
+              aloud, and draws the diagram that actually explains it.
+            </p>
           </div>
 
-          <p className="mt-4 font-mono text-[11px] text-muted-foreground">
-            no sign-up · voice runs in your browser · bring your own API key if you want
-          </p>
+          <div className="mt-8">
+            <TopicChat />
+          </div>
         </section>
 
         {/* Board preview */}
