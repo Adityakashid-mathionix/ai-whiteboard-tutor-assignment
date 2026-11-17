@@ -225,6 +225,7 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
               actions={player.whiteboard.actions}
               status={player.status}
               currentSegmentHeading={player.currentSegment?.heading}
+              currentSegmentNarration={player.currentSegment?.narration}
               zoom={player.whiteboard.zoom}
               showGrid={player.whiteboard.showGrid}
               onZoomIn={() =>

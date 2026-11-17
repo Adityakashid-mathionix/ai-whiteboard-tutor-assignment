@@ -58,6 +58,10 @@ function StudioContent() {
         setLesson(EXEMPLAR_LESSONS.laptop);
         setIsLoading(false);
         return;
+      } else if (lowerTopic.includes("rabies") && (EXEMPLAR_LESSONS as any).rabies) {
+        setLesson((EXEMPLAR_LESSONS as any).rabies);
+        setIsLoading(false);
+        return;
       }
     }
 

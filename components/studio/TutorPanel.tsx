@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Lesson, LessonSegment, PlaybackStatus } from "@/types/lesson";
 import { FollowUpChat } from "@/components/followup/FollowUpChat";
+import { AITeacherAvatar } from "./AITeacherAvatar";
 import {
   GraduationCap,
   Sparkles,
@@ -104,6 +105,14 @@ export const TutorPanel: React.FC<TutorPanelProps> = ({
       {/* Tab 1: Lecture Notes & Concepts */}
       {activeTab === "notes" ? (
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Animated AI Teacher Avatar Widget */}
+          <AITeacherAvatar
+            status={status}
+            currentSegmentHeading={currentSegment?.heading}
+            narration={currentSegment?.narration}
+            teacherName="Dr. Maya Chen"
+          />
+
           {/* Current Chapter Narration Script with handwritten tutor callout */}
           <div className="p-4 rounded-xl bg-neutral-50/80 border border-neutral-200 space-y-2">
             <div className="flex items-center justify-between">

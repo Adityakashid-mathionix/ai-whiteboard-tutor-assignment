@@ -65,6 +65,16 @@ export const SUGGESTED_TOPICS = [
     exemplarKey: "laptop",
     badge: "Hardware History",
   },
+  {
+    title: "Understanding Rabies",
+    category: "Virology & Medicine",
+    description: "Lyssavirus morphology, retrograde neural migration, hydrophobia symptoms, and PEP prevention.",
+    icon: Heart,
+    color: "bg-rose-50 text-rose-600 border-rose-200",
+    slug: "Understanding Rabies",
+    exemplarKey: "rabies",
+    badge: "Medical Science",
+  },
 ];
 
 interface SuggestedTopicsProps {

@@ -469,168 +469,288 @@ function normalizeLessonJson(raw: any, topic: string, visualAssets: EducationalV
       });
     }
 
-    // If segment has no image and we have visualAssets, inject a real Wikimedia image!
-    if (!hasImage && visualAssets.length > 0) {
-      const asset = visualAssets[idx % visualAssets.length];
-      const imageAction = {
-        type: "drawImage",
-        id: `real-img-${idx + 1}`,
-        url: asset.url,
-        x: 80,
-        y: 130,
-        width: 380,
-        height: 270,
-        caption: asset.title,
-        attribution: asset.attribution.author,
-        license: asset.attribution.license,
-        details: asset.description || asset.title,
-        tooltip: asset.title,
-      };
+    // --- STRUCTURED PEDAGOGICAL LAYOUT COMPOSITION ---
+    // Every segment gets a clean, balanced layout:
+    // 1. Top Header Banner & Divider
+    // 2. Left: Real Educational Image (or Vector Diagram Frame)
+    // 3. Right: Structured Concept Card with points matching the spoken narration
+    // 4. Bottom: Key Takeaway Principle Card
 
-      // Put real image at the front of visual actions
-      visualActions.unshift(imageAction);
-      hasImage = true;
-    }
-
-    // Guarantee that visualActions contains a rich, complete diagram (min 6 actions)
-    if (visualActions.length < 5) {
-      const isFirst = idx === 0;
-      const cardColor = isFirst ? "#1677ff" : idx % 2 === 0 ? "#059669" : "#d97706";
-      const cardBg = isFirst
+    const cardColor = idx % 3 === 0 ? "#1677ff" : idx % 3 === 1 ? "#059669" : "#d97706";
+    const cardBg =
+      idx % 3 === 0
         ? "rgba(238, 242, 255, 0.75)"
-        : idx % 2 === 0
+        : idx % 3 === 1
         ? "rgba(236, 253, 245, 0.75)"
         : "rgba(254, 243, 199, 0.75)";
 
-      // Top Header Title Banner
-      visualActions.unshift({
+    // Break narration into actionable conceptual bullet points
+    const rawSentences = narration
+      .replace(/([.?!])\s*(?=[A-Z])/g, "$1|")
+      .split("|")
+      .map((s: string) => s.trim().replace(/^["']|["']$/g, ""))
+      .filter((s: string) => s.length > 12);
+
+    const bullet1 = rawSentences[0]
+      ? rawSentences[0].length > 60
+        ? rawSentences[0].substring(0, 57) + "..."
+        : rawSentences[0]
+      : "Core mechanisms and foundational concepts";
+
+    const bullet2 = rawSentences[1]
+      ? rawSentences[1].length > 60
+        ? rawSentences[1].substring(0, 57) + "..."
+        : rawSentences[1]
+      : "Dynamic interactions and behavioral flow";
+
+    const bullet3 = rawSentences[2]
+      ? rawSentences[2].length > 60
+        ? rawSentences[2].substring(0, 57) + "..."
+        : rawSentences[2]
+      : "Critical takeaways and systemic importance";
+
+    // 1. Top Header Title Banner & Divider
+    const bannerActions: any[] = [
+      {
         type: "addText",
         id: `banner-${idx}`,
-        text: `${heading}`,
+        text: heading,
         x: 500,
-        y: 65,
-        fontSize: 20,
+        y: 50,
+        fontSize: 21,
         fill: "#0f172a",
         fontWeight: "bold",
         details: `Chapter ${idx + 1}: ${heading}`,
-      });
-
-      // Top Divider Line
-      visualActions.push({
+      },
+      {
         type: "drawLine",
         id: `div-${idx}`,
-        x1: 120,
-        y1: 85,
-        x2: 880,
-        y2: 85,
+        x1: 90,
+        y1: 72,
+        x2: 910,
+        y2: 72,
         stroke: cardColor,
         strokeWidth: 2,
-      });
+      },
+    ];
 
-      // Right-side Architecture / Specifications Card
-      visualActions.push({
+    // 2. Left Visual Area (Real Educational Image or Diagram Chassis)
+    let leftVisualActions: any[] = [];
+    if (!hasImage && visualAssets.length > 0) {
+      const asset = visualAssets[idx % visualAssets.length];
+      leftVisualActions = [
+        {
+          type: "drawImage",
+          id: `real-img-${idx + 1}`,
+          url: asset.url,
+          x: 80,
+          y: 105,
+          width: 385,
+          height: 290,
+          caption: asset.title,
+          attribution: asset.attribution.author,
+          license: asset.attribution.license,
+          details: asset.description || asset.title,
+          tooltip: asset.title,
+        },
+      ];
+      hasImage = true;
+    } else if (!hasImage) {
+      // If no image returned, create a structured Vector Diagram Frame
+      leftVisualActions = [
+        {
+          type: "drawRect",
+          id: `diag-frame-${idx}`,
+          x: 80,
+          y: 105,
+          width: 385,
+          height: 290,
+          rx: 14,
+          stroke: cardColor,
+          strokeWidth: 2,
+          fill: "rgba(248, 250, 252, 0.85)",
+          details: "Visual schematic model container.",
+          tooltip: "Model Schematic",
+        },
+        {
+          type: "addText",
+          id: `diag-title-${idx}`,
+          text: `Visual Schematic: ${heading}`,
+          x: 105,
+          y: 135,
+          fontSize: 14,
+          fill: cardColor,
+          fontWeight: "bold",
+        },
+        // Central illustrative nodes
+        {
+          type: "drawCircle",
+          id: `node-a-${idx}`,
+          cx: 180,
+          cy: 240,
+          r: 40,
+          stroke: cardColor,
+          strokeWidth: 2.5,
+          fill: "rgba(255, 255, 255, 0.9)",
+          details: "Input / Primary Component",
+        },
+        {
+          type: "addText",
+          id: `node-a-txt-${idx}`,
+          text: "Primary",
+          x: 180,
+          y: 245,
+          fontSize: 12,
+          fill: "#0f172a",
+          fontWeight: "bold",
+        },
+        {
+          type: "drawArrow",
+          id: `node-arr-${idx}`,
+          x1: 225,
+          y1: 240,
+          x2: 315,
+          y2: 240,
+          stroke: cardColor,
+          strokeWidth: 2.5,
+          label: "Mechanism",
+        },
+        {
+          type: "drawCircle",
+          id: `node-b-${idx}`,
+          cx: 360,
+          cy: 240,
+          r: 40,
+          stroke: "#059669",
+          strokeWidth: 2.5,
+          fill: "rgba(255, 255, 255, 0.9)",
+          details: "Output / Target Response",
+        },
+        {
+          type: "addText",
+          id: `node-b-txt-${idx}`,
+          text: "Response",
+          x: 360,
+          y: 245,
+          fontSize: 12,
+          fill: "#0f172a",
+          fontWeight: "bold",
+        },
+      ];
+    } else {
+      // LLM already had an image, retain it
+      leftVisualActions = visualActions.filter((a) => a.type === "drawImage");
+    }
+
+    // 3. Right Structured Concept Card
+    const rightCardActions: any[] = [
+      {
         type: "drawRect",
         id: `card-${idx}`,
-        x: 490,
-        y: 130,
-        width: 430,
-        height: 270,
+        x: 485,
+        y: 105,
+        width: 435,
+        height: 290,
         rx: 14,
         stroke: cardColor,
         strokeWidth: 2,
         fill: cardBg,
-        details: `Architectural breakdown and core mechanisms for ${heading}.`,
-        tooltip: "Mechanism Breakdown",
-      });
-
-      // Card Header
-      visualActions.push({
+        details: `Structured conceptual breakdown of ${heading}.`,
+        tooltip: "Concept Breakdown",
+      },
+      {
         type: "addText",
         id: `card-title-${idx}`,
-        text: `Core Dynamics: ${heading}`,
-        x: 520,
-        y: 165,
+        text: `Key Dynamics: ${heading}`,
+        x: 510,
+        y: 140,
         fontSize: 15,
         fill: cardColor,
         fontWeight: "bold",
-      });
-
-      // Bullet points
-      visualActions.push({
+      },
+      {
         type: "addText",
         id: `bullet1-${idx}`,
-        text: `• Mechanism: Integrated systems & workflow structure`,
-        x: 520,
-        y: 205,
+        text: `• ${bullet1}`,
+        x: 510,
+        y: 180,
         fontSize: 13,
         fill: "#334155",
-        details: "Primary functional workflow of this component.",
-      });
-
-      visualActions.push({
+        fontWeight: "normal",
+        details: bullet1,
+      },
+      {
         type: "addText",
         id: `bullet2-${idx}`,
-        text: `• Interaction: Real-time response and boundary flow`,
-        x: 520,
-        y: 235,
+        text: `• ${bullet2}`,
+        x: 510,
+        y: 215,
         fontSize: 13,
         fill: "#334155",
-        details: "Internal communication pathway between elements.",
-      });
-
-      visualActions.push({
+        fontWeight: "normal",
+        details: bullet2,
+      },
+      {
         type: "addText",
         id: `bullet3-${idx}`,
-        text: `• Innovation: Solved key engineering bottlenecks`,
-        x: 520,
-        y: 265,
+        text: `• ${bullet3}`,
+        x: 510,
+        y: 250,
         fontSize: 13,
         fill: "#334155",
-        details: "Historical breakthrough that enabled modern performance.",
-      });
-
-      // Connecting Arrow
-      visualActions.push({
+        fontWeight: "normal",
+        details: bullet3,
+      },
+      {
         type: "drawArrow",
         id: `flow-arr-${idx}`,
-        x1: 460,
-        y1: 265,
-        x2: 490,
-        y2: 265,
+        x1: 465,
+        y1: 250,
+        x2: 485,
+        y2: 250,
         stroke: cardColor,
         strokeWidth: 2.5,
-        label: "Drives",
-        details: "Direct functional connection between visual model and specs.",
-      });
+        label: "Sync",
+      },
+    ];
 
-      // Bottom Milestone / Key Takeaway Callout Box
-      visualActions.push({
+    // 4. Bottom Milestone / Key Takeaway Callout Box
+    const takeawayActions: any[] = [
+      {
         type: "drawRect",
         id: `takeaway-box-${idx}`,
         x: 80,
-        y: 430,
+        y: 420,
         width: 840,
         height: 75,
         rx: 12,
         stroke: "#d97706",
         strokeWidth: 1.5,
-        fill: "rgba(254, 243, 199, 0.7)",
-        details: keyTakeaway || `Key principle of ${heading}`,
+        fill: "rgba(254, 243, 199, 0.75)",
+        details: keyTakeaway || `Core principle of ${heading}`,
         tooltip: "Master Takeaway",
-      });
-
-      visualActions.push({
+      },
+      {
         type: "addText",
         id: `takeaway-txt-${idx}`,
-        text: `💡 Key Takeaway: ${keyTakeaway || narration.substring(0, 90)}...`,
+        text: `💡 Key Insight: ${keyTakeaway || narration.substring(0, 85)}...`,
         x: 105,
-        y: 472,
+        y: 462,
         fontSize: 13,
         fill: "#92400e",
         fontWeight: "bold",
         details: keyTakeaway || narration,
-      });
-    }
+      },
+    ];
+
+    // Compose final actions: Clear -> Banner -> Left Visuals -> Right Concepts -> Bottom Takeaway
+    visualActions = [
+      { type: "clear" },
+      ...bannerActions,
+      ...leftVisualActions,
+      ...rightCardActions,
+      ...takeawayActions,
+    ];
 
     return {
       id: seg.id || `seg-${idx + 1}`,

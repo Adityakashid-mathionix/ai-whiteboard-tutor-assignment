@@ -4,6 +4,7 @@ import React, { useRef, useState, useEffect, useCallback } from "react";
 import { WhiteboardAction } from "@/lib/schemas/lesson-schema";
 import { WhiteboardActionRenderer } from "@/lib/whiteboard/action-renderer";
 import { PlaybackStatus } from "@/types/lesson";
+import { AITeacherAvatar } from "./AITeacherAvatar";
 import {
   ZoomIn,
   ZoomOut,
@@ -39,6 +40,7 @@ interface WhiteboardProps {
   actions: WhiteboardAction[];
   status: PlaybackStatus;
   currentSegmentHeading?: string;
+  currentSegmentNarration?: string;
   zoom: number;
   showGrid: boolean;
   onZoomIn: () => void;
@@ -51,6 +53,7 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
   actions,
   status,
   currentSegmentHeading,
+  currentSegmentNarration,
   zoom,
   showGrid,
   onZoomIn,
@@ -64,8 +67,6 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeTool, setActiveTool] = useState<"pointer" | "pan" | "pen" | "highlighter" | "eraser">("pointer");
   const [penColor, setPenColor] = useState<string>("#1677ff");
-  const [laserPos, setLaserPos] = useState<{ x: number; y: number } | null>(null);
-  const [showLaser, setShowLaser] = useState(false); // Disabled by default to prevent distracting jumping dot
 
   // Pan state
   const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -100,24 +101,7 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
     return () => document.removeEventListener("fullscreenchange", handleFsChange);
   }, []);
 
-  // Compute laser pointer position based on current active action
-  useEffect(() => {
-    if (!actions || actions.length === 0) {
-      setLaserPos(null);
-      return;
-    }
 
-    const lastAction = actions[actions.length - 1];
-    if (!lastAction) return;
-
-    if ("x" in lastAction && "y" in lastAction && typeof lastAction.x === "number" && typeof lastAction.y === "number") {
-      setLaserPos({ x: lastAction.x, y: lastAction.y });
-    } else if ("cx" in lastAction && "cy" in lastAction && typeof lastAction.cx === "number" && typeof lastAction.cy === "number") {
-      setLaserPos({ x: lastAction.cx, y: lastAction.cy });
-    } else if ("x2" in lastAction && "y2" in lastAction && typeof lastAction.x2 === "number" && typeof lastAction.y2 === "number") {
-      setLaserPos({ x: lastAction.x2, y: lastAction.y2 });
-    }
-  }, [actions]);
 
   // Convert client mouse coordinates to SVG 1000x600 viewBox coordinates
   const getSvgPoint = (clientX: number, clientY: number): { x: number; y: number } | null => {
@@ -356,17 +340,6 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
 
           <div className="h-3 w-px bg-neutral-300 mx-0.5" />
 
-          {/* Laser Pointer */}
-          <button
-            onClick={() => setShowLaser(!showLaser)}
-            title={showLaser ? "Disable Teacher Laser" : "Enable Teacher Laser"}
-            className={`p-1.5 rounded-lg text-xs transition-all duration-200 ${
-              showLaser ? "text-rose-500 bg-rose-50" : "text-neutral-400"
-            }`}
-          >
-            <Crosshair className="w-3.5 h-3.5" />
-          </button>
-
           {/* Grid Matrix */}
           <button
             onClick={onToggleGrid}
@@ -514,25 +487,7 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
               )}
             </g>
 
-            {/* Real-time Teacher Laser Pointer (Only visible when user toggles laser on) */}
-            {laserPos && showLaser && (
-              <g className="transition-all duration-300 pointer-events-none">
-                <circle
-                  cx={laserPos.x}
-                  cy={laserPos.y}
-                  r="6"
-                  fill="#ef4444"
-                  opacity="0.9"
-                  filter="drop-shadow(0 0 6px rgba(239, 68, 68, 0.7))"
-                />
-                <circle
-                  cx={laserPos.x}
-                  cy={laserPos.y}
-                  r="2.5"
-                  fill="#ffffff"
-                />
-              </g>
-            )}
+
 
             {/* Empty State */}
             {actions.length === 0 && (
@@ -593,21 +548,16 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
           </div>
         )}
 
-        {/* Live Audio Oscilloscope Wave Indicator (When Speaking) */}
-        {status === "playing" && (
-          <div className="absolute bottom-5 left-5 flex items-center space-x-2 px-3 py-1.5 rounded-full bg-white/95 border border-[#e2e5eb] backdrop-blur-md shadow-md pointer-events-none">
-            <Radio className="w-3.5 h-3.5 text-electric animate-pulse" />
-            <span className="text-[10px] font-mono font-bold text-electric">
-              VOICE NARRATION SYNC
-            </span>
-            <div className="flex items-center space-x-0.5 ml-1">
-              <span className="w-1 h-3 bg-electric rounded-full animate-bounce [animation-delay:0ms]" />
-              <span className="w-1 h-4 bg-electric rounded-full animate-bounce [animation-delay:150ms]" />
-              <span className="w-1 h-2 bg-electric rounded-full animate-bounce [animation-delay:300ms]" />
-              <span className="w-1 h-5 bg-electric rounded-full animate-bounce [animation-delay:450ms]" />
-            </div>
-          </div>
-        )}
+        {/* Floating AI Teacher Teaching Widget on Whiteboard */}
+        <div className="absolute bottom-5 left-5 z-20">
+          <AITeacherAvatar
+            status={status}
+            currentSegmentHeading={currentSegmentHeading}
+            narration={currentSegmentNarration}
+            teacherName="Dr. Maya Chen"
+            isFloating={true}
+          />
+        </div>
 
         {/* Resolution Badge Bottom Right */}
         <div className="absolute bottom-5 right-5 flex items-center space-x-2 px-3 py-1.5 rounded-full bg-white/95 border border-[#e2e5eb] text-[11px] font-mono text-neutral-600 backdrop-blur-md pointer-events-none shadow-md">

@@ -137,6 +137,72 @@ export const CURATED_TOPIC_ASSETS: Record<string, EducationalVisualAsset[]> = {
       description: "Modern silicon microarchitecture with integrated memory controllers and GPU cores.",
     },
   ],
+  rabies: [
+    {
+      id: "curated-rabies-1",
+      title: "Rabies Virus Virion & Rhabdovirus Morphology",
+      url: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Rabies_virus.jpg/640px-Rabies_virus.jpg",
+      mimeType: "image/jpeg",
+      width: 600,
+      height: 450,
+      attribution: {
+        title: "Rabies Virus Micrograph",
+        sourceUrl: "https://commons.wikimedia.org/wiki/File:Rabies_virus.jpg",
+        author: "CDC / Dr. Fred Murphy",
+        license: "Public Domain",
+      },
+      description: "Bullet-shaped virions of the Rabies lyssavirus showing helical ribonucleoprotein core and glycoprotein spikes.",
+    },
+    {
+      id: "curated-rabies-2",
+      title: "Rabies Transmission & Central Nervous System Pathway",
+      url: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Rabies_virus_TEM_0561_lores.jpg/640px-Rabies_virus_TEM_0561_lores.jpg",
+      mimeType: "image/jpeg",
+      width: 600,
+      height: 420,
+      attribution: {
+        title: "Transmission Electron Micrograph of Rabies Virus",
+        sourceUrl: "https://commons.wikimedia.org/wiki/File:Rabies_virus_TEM_0561_lores.jpg",
+        author: "CDC / Dr. Fred Murphy",
+        license: "Public Domain",
+      },
+      description: "Lyssavirus particles migrating along peripheral nerves toward the spinal cord and brain stem.",
+    },
+  ],
+  virus: [
+    {
+      id: "curated-virus-1",
+      title: "Virus Structure & Capsid Morphology",
+      url: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Rabies_virus.jpg/640px-Rabies_virus.jpg",
+      mimeType: "image/jpeg",
+      width: 600,
+      height: 450,
+      attribution: {
+        title: "Virus Morphology",
+        sourceUrl: "https://commons.wikimedia.org",
+        author: "CDC",
+        license: "Public Domain",
+      },
+      description: "Viral structural dynamics, envelope lipid bilayer, and spike proteins.",
+    },
+  ],
+  brain: [
+    {
+      id: "curated-brain-1",
+      title: "Human Brain Anatomy & Neural Pathways",
+      url: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Brain_diagram_en.svg/640px-Brain_diagram_en.svg.png",
+      mimeType: "image/png",
+      width: 600,
+      height: 460,
+      attribution: {
+        title: "Brain Anatomy",
+        sourceUrl: "https://commons.wikimedia.org/wiki/File:Brain_diagram_en.svg",
+        author: "Wikimedia Commons",
+        license: "CC BY-SA 3.0",
+      },
+      description: "Cerebral cortex, cerebellum, brainstem, and central nervous system synapses.",
+    },
+  ],
 };
 
 export async function getVisualAssetsForTopic(topic: string, query?: string): Promise<EducationalVisualAsset[]> {
@@ -160,6 +226,15 @@ export async function getVisualAssetsForTopic(topic: string, query?: string): Pr
   }
   if (normalized.includes("laptop") || normalized.includes("notebook") || normalized.includes("portable computer")) {
     return CURATED_TOPIC_ASSETS.laptop;
+  }
+  if (normalized.includes("rabies") || normalized.includes("lyssavirus") || normalized.includes("hydrophobia")) {
+    return CURATED_TOPIC_ASSETS.rabies;
+  }
+  if (normalized.includes("virus") || normalized.includes("infection") || normalized.includes("disease") || normalized.includes("pathogen")) {
+    return CURATED_TOPIC_ASSETS.virus;
+  }
+  if (normalized.includes("brain") || normalized.includes("neuron") || normalized.includes("neural") || normalized.includes("nervous system")) {
+    return CURATED_TOPIC_ASSETS.brain;
   }
   if (normalized.includes("computer") || normalized.includes("pc") || normalized.includes("hardware")) {
     return CURATED_TOPIC_ASSETS.computer;
