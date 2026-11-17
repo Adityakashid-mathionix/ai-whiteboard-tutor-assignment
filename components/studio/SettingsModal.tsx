@@ -45,7 +45,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     {
       id: "nvidia/nemotron-3.5-lightning-30b-a3b",
       name: "NVIDIA Nemotron 3.5 Lightning (Recommended)",
-      desc: "NVIDIA's official high-speed instruction & visual reasoning model.",
+      desc: "NVIDIA's official high-speed instruction & visual reasoning model (~1-3s).",
     },
     {
       id: "nvidia/nemotron-3.5-bolt-e4b",
@@ -65,11 +65,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden p-6 text-slate-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="w-full max-w-md bg-[#0f172a] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden p-6 text-slate-200">
         <div className="flex items-center justify-between pb-4 border-b border-slate-800">
           <div className="flex items-center space-x-2">
-            <Key className="w-5 h-5 text-sky-400" />
+            <Key className="w-5 h-5 text-blue-400" />
             <h3 className="text-base font-bold text-white">AI Provider Settings</h3>
           </div>
           <button
@@ -91,7 +91,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 href="https://build.nvidia.com"
                 target="_blank"
                 rel="noreferrer"
-                className="text-[11px] text-sky-400 hover:underline flex items-center space-x-1"
+                className="text-[11px] text-blue-400 hover:underline flex items-center space-x-1"
               >
                 <span>Get free key</span>
                 <ExternalLink className="w-3 h-3" />
@@ -102,11 +102,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               value={localKey}
               onChange={(e) => setLocalKey(e.target.value)}
               placeholder="nvapi-..."
-              className="w-full bg-slate-950 border border-slate-800 focus:border-sky-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-sky-500 font-mono"
+              className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
             />
             <p className="text-[11px] text-slate-400 mt-1.5 flex items-center space-x-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-              <span>Keys are sent directly via server route and never exposed on frontend.</span>
+              <span>Keys remain server-side and are never exposed in client bundles.</span>
             </p>
           </div>
 
@@ -121,8 +121,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   key={m.id}
                   className={`flex flex-col p-2.5 rounded-xl border text-left cursor-pointer transition-colors ${
                     localModel === m.id
-                      ? "bg-slate-800/80 border-sky-500/80 text-white"
-                      : "bg-slate-950/50 border-slate-800 hover:bg-slate-800/40 text-slate-400"
+                      ? "bg-slate-850 border-blue-500/80 text-white"
+                      : "bg-slate-950/60 border-slate-800 hover:bg-slate-850/50 text-slate-400"
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -133,7 +133,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       value={m.id}
                       checked={localModel === m.id}
                       onChange={() => setLocalModel(m.id)}
-                      className="text-sky-500 focus:ring-sky-500"
+                      className="text-blue-500 focus:ring-blue-500"
                     />
                   </div>
                   <span className="text-[10px] text-slate-400 mt-0.5">{m.desc}</span>
@@ -152,7 +152,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </button>
             <button
               onClick={handleSave}
-              className="px-5 py-2 rounded-xl text-xs font-semibold bg-sky-500 hover:bg-sky-400 text-slate-950 transition-colors flex items-center space-x-1.5"
+              className="px-5 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-colors flex items-center space-x-1.5 shadow-md shadow-blue-600/30"
             >
               {savedSuccess ? (
                 <>

@@ -3,9 +3,6 @@
 > **Official Technical Assignment Submission for Braynix Studios**  
 > An autonomous AI learning platform that explains any educational or technical concept through synchronized voice narration, real-time SVG whiteboard animations, and interactive follow-up Q&A.
 
-**🌐 Live Production Deployment:** [https://ai-whiteboard-tutor-two.vercel.app](https://ai-whiteboard-tutor-two.vercel.app)  
-**⚡ Alternate Deployment:** [https://ai-whiteboard-tutor-ghzgw163w-bhau-ki-team.vercel.app](https://ai-whiteboard-tutor-ghzgw163w-bhau-ki-team.vercel.app)
-
 ---
 
 ## 🌟 Executive Summary & Product Vision

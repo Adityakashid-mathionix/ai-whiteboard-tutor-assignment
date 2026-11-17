@@ -8,8 +8,10 @@ export const WhiteboardTextActionSchema = z.object({
   x: z.number().min(0).max(1000),
   y: z.number().min(0).max(600),
   fontSize: z.number().min(10).max(60).optional().default(18),
-  fill: z.string().optional().default("#f8fafc"),
+  fill: z.string().optional().default("#0f172a"),
   fontWeight: z.enum(["normal", "bold", "600"]).optional().default("normal"),
+  details: z.string().optional(),
+  tooltip: z.string().optional(),
 });
 
 export const WhiteboardLineActionSchema = z.object({
@@ -19,9 +21,11 @@ export const WhiteboardLineActionSchema = z.object({
   y1: z.number().min(0).max(600),
   x2: z.number().min(0).max(1000),
   y2: z.number().min(0).max(600),
-  stroke: z.string().optional().default("#60a5fa"),
-  strokeWidth: z.number().min(1).max(12).optional().default(3),
+  stroke: z.string().optional().default("#2563eb"),
+  strokeWidth: z.number().min(1).max(14).optional().default(3),
   strokeDasharray: z.string().optional(),
+  details: z.string().optional(),
+  tooltip: z.string().optional(),
 });
 
 export const WhiteboardCircleActionSchema = z.object({
@@ -30,9 +34,12 @@ export const WhiteboardCircleActionSchema = z.object({
   cx: z.number().min(0).max(1000),
   cy: z.number().min(0).max(600),
   r: z.number().min(2).max(400),
-  stroke: z.string().optional().default("#818cf8"),
-  strokeWidth: z.number().min(1).max(12).optional().default(3),
+  stroke: z.string().optional().default("#0284c7"),
+  strokeWidth: z.number().min(1).max(14).optional().default(3),
+  strokeDasharray: z.string().optional(),
   fill: z.string().optional().default("none"),
+  details: z.string().optional(),
+  tooltip: z.string().optional(),
 });
 
 export const WhiteboardRectActionSchema = z.object({
@@ -43,18 +50,23 @@ export const WhiteboardRectActionSchema = z.object({
   width: z.number().min(2).max(1000),
   height: z.number().min(2).max(600),
   rx: z.number().min(0).max(40).optional().default(8),
-  stroke: z.string().optional().default("#34d399"),
-  strokeWidth: z.number().min(1).max(12).optional().default(2),
-  fill: z.string().optional().default("rgba(30, 41, 59, 0.4)"),
+  stroke: z.string().optional().default("#059669"),
+  strokeWidth: z.number().min(1).max(14).optional().default(2),
+  strokeDasharray: z.string().optional(),
+  fill: z.string().optional().default("rgba(241, 245, 249, 0.7)"),
+  details: z.string().optional(),
+  tooltip: z.string().optional(),
 });
 
 export const WhiteboardPathActionSchema = z.object({
   type: z.literal("drawPath"),
   id: z.string().optional().default(() => Math.random().toString(36).substring(2, 9)),
   path: z.string(),
-  stroke: z.string().optional().default("#a78bfa"),
-  strokeWidth: z.number().min(1).max(12).optional().default(3),
+  stroke: z.string().optional().default("#2563eb"),
+  strokeWidth: z.number().min(1).max(14).optional().default(3),
   fill: z.string().optional().default("none"),
+  details: z.string().optional(),
+  tooltip: z.string().optional(),
 });
 
 export const WhiteboardArrowActionSchema = z.object({
@@ -64,9 +76,11 @@ export const WhiteboardArrowActionSchema = z.object({
   y1: z.number().min(0).max(600),
   x2: z.number().min(0).max(1000),
   y2: z.number().min(0).max(600),
-  stroke: z.string().optional().default("#38bdf8"),
-  strokeWidth: z.number().min(1).max(12).optional().default(3),
+  stroke: z.string().optional().default("#0284c7"),
+  strokeWidth: z.number().min(1).max(14).optional().default(3),
   label: z.string().optional(),
+  details: z.string().optional(),
+  tooltip: z.string().optional(),
 });
 
 export const WhiteboardHighlightActionSchema = z.object({
@@ -76,7 +90,8 @@ export const WhiteboardHighlightActionSchema = z.object({
   y: z.number().min(0).max(600),
   width: z.number().min(4).max(1000),
   height: z.number().min(4).max(600),
-  color: z.string().optional().default("rgba(251, 191, 36, 0.2)"),
+  color: z.string().optional().default("rgba(254, 240, 138, 0.45)"),
+  details: z.string().optional(),
 });
 
 export const WhiteboardLabelActionSchema = z.object({
@@ -85,8 +100,26 @@ export const WhiteboardLabelActionSchema = z.object({
   text: z.string(),
   x: z.number().min(0).max(1000),
   y: z.number().min(0).max(600),
-  color: z.string().optional().default("#38bdf8"),
-  bg: z.string().optional().default("rgba(15, 23, 42, 0.8)"),
+  color: z.string().optional().default("#1e293b"),
+  bg: z.string().optional().default("#f1f5f9"),
+  borderColor: z.string().optional().default("#cbd5e1"),
+  details: z.string().optional(),
+  tooltip: z.string().optional(),
+});
+
+export const WhiteboardImageActionSchema = z.object({
+  type: z.literal("drawImage"),
+  id: z.string().optional().default(() => Math.random().toString(36).substring(2, 9)),
+  url: z.string().url(),
+  x: z.number().min(0).max(1000),
+  y: z.number().min(0).max(600),
+  width: z.number().min(40).max(900),
+  height: z.number().min(40).max(560),
+  caption: z.string().optional(),
+  attribution: z.string().optional(),
+  license: z.string().optional(),
+  details: z.string().optional(),
+  tooltip: z.string().optional(),
 });
 
 export const WhiteboardEraseActionSchema = z.object({
@@ -107,6 +140,7 @@ export const WhiteboardActionSchema = z.discriminatedUnion("type", [
   WhiteboardArrowActionSchema,
   WhiteboardHighlightActionSchema,
   WhiteboardLabelActionSchema,
+  WhiteboardImageActionSchema,
   WhiteboardEraseActionSchema,
   WhiteboardClearActionSchema,
 ]);
@@ -116,6 +150,9 @@ export const LessonSegmentSchema = z.object({
   heading: z.string().min(2),
   narration: z.string().min(10),
   keyTakeaway: z.string().optional().default(""),
+  visualQuery: z.string().optional(),
+  visualType: z.string().optional(),
+  visualDescription: z.string().optional(),
   visualActions: z.array(WhiteboardActionSchema),
 });
 
@@ -124,6 +161,8 @@ export const LessonSchema = z.object({
   title: z.string().min(2),
   topic: z.string().min(2),
   summary: z.string().min(10),
+  language: z.string().optional().default("en"),
+  learningLevel: z.string().optional().default("beginner"),
   estimatedDuration: z.number().min(30).max(300).optional().default(120),
   segments: z.array(LessonSegmentSchema).min(2).max(10),
   createdAt: z.string().optional().default(() => new Date().toISOString()),
@@ -139,6 +178,7 @@ export type WhiteboardPathAction = z.input<typeof WhiteboardPathActionSchema>;
 export type WhiteboardArrowAction = z.input<typeof WhiteboardArrowActionSchema>;
 export type WhiteboardHighlightAction = z.input<typeof WhiteboardHighlightActionSchema>;
 export type WhiteboardLabelAction = z.input<typeof WhiteboardLabelActionSchema>;
+export type WhiteboardImageAction = z.input<typeof WhiteboardImageActionSchema>;
 export type WhiteboardEraseAction = z.input<typeof WhiteboardEraseActionSchema>;
 export type WhiteboardClearAction = z.input<typeof WhiteboardClearActionSchema>;
 

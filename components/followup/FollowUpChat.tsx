@@ -21,7 +21,7 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
     {
       id: "init",
       role: "assistant",
-      content: `Hello! I'm your AI whiteboard tutor for "${lesson.title}". What would you like to explore deeper or clarify?`,
+      content: `Hello! I'm Dr. Maya Chen, your AI whiteboard tutor for "${lesson.title}". What would you like to explore deeper or clarify?`,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     },
   ]);
@@ -99,7 +99,7 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
     currentSegmentHeading
       ? `Can you explain "${currentSegmentHeading}" more simply?`
       : `Why is this concept important?`,
-    `What are the most common misconceptions?`,
+    `What are common misconceptions about this?`,
   ];
 
   return (
@@ -116,8 +116,8 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
             <div
               className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
                 msg.role === "user"
-                  ? "bg-sky-600 text-white"
-                  : "bg-indigo-600/80 text-white"
+                  ? "bg-blue-600 text-white"
+                  : "bg-slate-800 text-blue-400 border border-slate-700"
               }`}
             >
               {msg.role === "user" ? (
@@ -130,14 +130,14 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
             <div
               className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 leading-relaxed ${
                 msg.role === "user"
-                  ? "bg-sky-600 text-white rounded-tr-none"
-                  : "bg-slate-950/70 border border-slate-800 text-slate-200 rounded-tl-none whitespace-pre-line"
+                  ? "bg-blue-600 text-white rounded-tr-none"
+                  : "bg-slate-950/80 border border-slate-800 text-slate-200 rounded-tl-none whitespace-pre-line"
               }`}
             >
               {msg.content}
               <div
                 className={`text-[9px] mt-1 ${
-                  msg.role === "user" ? "text-sky-200" : "text-slate-500"
+                  msg.role === "user" ? "text-blue-200" : "text-slate-500"
                 }`}
               >
                 {msg.timestamp}
@@ -147,9 +147,9 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
         ))}
 
         {isLoading && (
-          <div className="flex items-center space-x-2 text-xs text-indigo-400 bg-indigo-950/30 border border-indigo-900/40 p-2.5 rounded-xl w-fit">
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" />
-            <span>Tutor is formulating an explanation...</span>
+          <div className="flex items-center space-x-2 text-xs text-blue-400 bg-blue-950/40 border border-blue-900/50 p-2.5 rounded-xl w-fit">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />
+            <span>Formulating Socratic explanation...</span>
           </div>
         )}
 
@@ -168,10 +168,10 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
             <button
               key={idx}
               onClick={() => handleSend(q)}
-              className="text-[11px] px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 border border-slate-700 transition-colors flex items-center space-x-1 text-left"
+              className="text-[11px] px-2.5 py-1 rounded-full bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-slate-700 transition-colors flex items-center space-x-1 text-left"
             >
-              <Sparkles className="w-2.5 h-2.5 text-sky-400" />
-              <span className="truncate max-w-[200px]">{q}</span>
+              <Sparkles className="w-2.5 h-2.5 text-blue-400" />
+              <span className="truncate max-w-[210px]">{q}</span>
             </button>
           ))}
         </div>
@@ -191,12 +191,12 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask tutor a follow-up question..."
           disabled={isLoading}
-          className="flex-1 bg-slate-950/80 border border-slate-800 focus:border-sky-500 rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-sky-500 transition-all disabled:opacity-50"
+          className="flex-1 bg-slate-950 border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={isLoading || !input.trim()}
-          className="p-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 disabled:opacity-40 transition-colors flex items-center justify-center shadow-md shadow-sky-500/20"
+          className="p-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40 transition-colors flex items-center justify-center shadow-md shadow-blue-600/30"
         >
           <Send className="w-3.5 h-3.5" />
         </button>

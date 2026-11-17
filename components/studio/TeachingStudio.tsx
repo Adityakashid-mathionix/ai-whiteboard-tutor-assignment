@@ -26,7 +26,7 @@ interface TeachingStudioProps {
 
 export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson }) => {
   const [apiKey, setApiKey] = useState<string>("");
-  const [selectedModel, setSelectedModel] = useState<string>("meta/muse-glimmer-30b");
+  const [selectedModel, setSelectedModel] = useState<string>("nvidia/nemotron-3.5-lightning-30b-a3b");
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [mobileTab, setMobileTab] = useState<"whiteboard" | "outline" | "tutor">("whiteboard");
 
@@ -57,10 +57,10 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
   const onLessonComplete = () => {
     try {
       confetti({
-        particleCount: 100,
-        spread: 80,
+        particleCount: 80,
+        spread: 70,
         origin: { y: 0.6 },
-        colors: ["#38bdf8", "#818cf8", "#34d399", "#fbbf24"],
+        colors: ["#2563eb", "#0284c7", "#059669", "#d97706"],
       });
     } catch {}
   };
@@ -73,7 +73,6 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
   // Keyboard shortcut listeners (Space = Play/Pause, ArrowLeft/Right = Seek, M = Mute)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if user is typing in an input or textarea
       if (
         document.activeElement?.tagName === "INPUT" ||
         document.activeElement?.tagName === "TEXTAREA"
@@ -107,22 +106,22 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
   }, [player]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#060911] text-slate-100">
+    <div className="flex flex-col min-h-screen bg-[#0b0f17] text-slate-100 selection:bg-blue-500/30 selection:text-blue-200">
       {/* Studio Top Navigation Bar */}
-      <header className="flex items-center justify-between px-4 sm:px-6 py-3 bg-[#0a0e17]/90 border-b border-slate-800/80 backdrop-blur-xl sticky top-0 z-40">
+      <header className="flex items-center justify-between px-4 sm:px-6 py-3 bg-[#0f172a]/90 border-b border-slate-800 backdrop-blur-xl sticky top-0 z-40">
         <div className="flex items-center space-x-3.5">
           <Link
             href="/"
-            className="flex items-center space-x-1.5 text-xs text-slate-400 hover:text-white px-3 py-1.5 rounded-xl hover:bg-slate-800/70 border border-transparent hover:border-slate-700 transition-all"
+            className="flex items-center space-x-1.5 text-xs text-slate-400 hover:text-white px-3 py-1.5 rounded-xl hover:bg-slate-800 border border-transparent hover:border-slate-700 transition-all"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline font-medium">Topics</span>
+            <span className="hidden sm:inline font-medium">Browse Topics</span>
           </Link>
 
           <div className="h-4 w-px bg-slate-800" />
 
           <div className="flex items-center space-x-2.5">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-[0_0_12px_rgba(56,189,248,0.4)]">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center text-white shadow-[0_0_12px_rgba(37,99,235,0.4)]">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
@@ -130,15 +129,15 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
                 Braynix Studio
               </span>
               <span className="text-[10px] text-slate-400 font-mono leading-none">
-                AI Whiteboard Tutor
+                Interactive AI Whiteboard
               </span>
             </div>
           </div>
         </div>
 
         {/* Current Topic Badge */}
-        <div className="hidden md:flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-slate-800 text-xs shadow-inner">
-          <span className="text-sky-300 font-semibold truncate max-w-sm">
+        <div className="hidden md:flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs shadow-inner">
+          <span className="text-blue-300 font-semibold truncate max-w-sm">
             {initialLesson.title}
           </span>
         </div>
@@ -146,39 +145,39 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
         {/* Studio Actions */}
         <div className="flex items-center space-x-2">
           {/* Keyboard shortcut hint */}
-          <div className="hidden lg:flex items-center space-x-1 text-[11px] font-mono text-slate-500 bg-slate-900/60 px-2.5 py-1 rounded-lg border border-slate-800">
-            <Command className="w-3 h-3" />
+          <div className="hidden lg:flex items-center space-x-1 text-[11px] font-mono text-slate-400 bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800">
+            <Command className="w-3 h-3 text-slate-500" />
             <span>Space: Play/Pause</span>
           </div>
 
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-xs text-slate-300 hover:text-white border border-slate-800 transition-all shadow-sm"
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-xs text-slate-300 hover:text-white border border-slate-800 transition-all shadow-sm"
           >
-            <Settings className="w-3.5 h-3.5 text-sky-400" />
+            <Settings className="w-3.5 h-3.5 text-blue-400" />
             <span className="hidden sm:inline font-medium">Settings</span>
           </button>
         </div>
       </header>
 
       {/* Mobile Tab Navigation */}
-      <div className="lg:hidden flex border-b border-slate-800 bg-[#0a0e17] px-4 py-2 space-x-2">
+      <div className="lg:hidden flex border-b border-slate-800 bg-[#0f172a] px-4 py-2 space-x-2">
         <button
           onClick={() => setMobileTab("whiteboard")}
           className={`flex-1 py-1.5 rounded-lg text-xs font-medium flex items-center justify-center space-x-1.5 transition-colors ${
             mobileTab === "whiteboard"
-              ? "bg-sky-500/20 text-sky-400 border border-sky-500/30"
+              ? "bg-blue-600 text-white"
               : "text-slate-400 hover:text-white"
           }`}
         >
           <Monitor className="w-3.5 h-3.5" />
-          <span>Whiteboard</span>
+          <span>Smartboard</span>
         </button>
         <button
           onClick={() => setMobileTab("outline")}
           className={`flex-1 py-1.5 rounded-lg text-xs font-medium flex items-center justify-center space-x-1.5 transition-colors ${
             mobileTab === "outline"
-              ? "bg-sky-500/20 text-sky-400 border border-sky-500/30"
+              ? "bg-blue-600 text-white"
               : "text-slate-400 hover:text-white"
           }`}
         >
@@ -189,12 +188,12 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
           onClick={() => setMobileTab("tutor")}
           className={`flex-1 py-1.5 rounded-lg text-xs font-medium flex items-center justify-center space-x-1.5 transition-colors ${
             mobileTab === "tutor"
-              ? "bg-sky-500/20 text-sky-400 border border-sky-500/30"
+              ? "bg-blue-600 text-white"
               : "text-slate-400 hover:text-white"
           }`}
         >
           <GraduationCap className="w-3.5 h-3.5" />
-          <span>Tutor & Q&A</span>
+          <span>Notes & Q&A</span>
         </button>
       </div>
 
