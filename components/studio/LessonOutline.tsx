@@ -18,22 +18,22 @@ export const LessonOutline: React.FC<LessonOutlineProps> = ({
   onSelectSegment,
 }) => {
   return (
-    <div className="flex flex-col h-full bg-white rounded-2xl border border-[#e2e5eb] shadow-[0_4px_25px_rgba(0,0,0,0.04)] overflow-hidden">
+    <div className="flex flex-col h-full bg-paper rounded-2xl border border-border shadow-[0_4px_25px_rgba(0,0,0,0.04)] overflow-hidden">
       {/* Header Bar */}
-      <div className="px-5 py-4 border-b border-[#f1f3f7] bg-white">
+      <div className="px-5 py-4 border-b border-border bg-paper">
         <div className="flex items-center justify-between text-[11px] font-mono text-electric mb-2">
           <div className="flex items-center space-x-1.5 font-semibold">
             <Clock className="w-3.5 h-3.5" />
             <span>~{lesson.estimatedDuration || 120}s MASTERCLASS</span>
           </div>
-          <span className="text-neutral-500 font-bold font-mono">
+          <span className="text-muted-foreground font-bold font-mono">
             {currentSegmentIndex + 1} / {lesson.segments.length}
           </span>
         </div>
-        <h2 className="text-base font-serif font-bold text-[#0d0e11] line-clamp-2 leading-snug">
+        <h2 className="text-base handwritten font-bold text-foreground line-clamp-2 leading-snug">
           {lesson.title}
         </h2>
-        <p className="text-xs text-neutral-500 mt-1 line-clamp-2 leading-relaxed font-sans">
+        <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed font-sans">
           {lesson.summary}
         </p>
       </div>
@@ -41,10 +41,10 @@ export const LessonOutline: React.FC<LessonOutlineProps> = ({
       {/* Chapters Timeline List */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         <div className="flex items-center justify-between px-2 pb-1">
-          <span className="text-[10px] font-mono font-bold tracking-wider text-neutral-400 uppercase">
+          <span className="text-[10px] font-mono font-bold tracking-wider text-muted-foreground uppercase">
             Curriculum Roadmap ({lesson.segments.length})
           </span>
-          <span className="text-[10px] font-mono text-neutral-400">
+          <span className="text-[10px] font-mono text-muted-foreground">
             Click to Seek
           </span>
         </div>
@@ -60,20 +60,20 @@ export const LessonOutline: React.FC<LessonOutlineProps> = ({
               onClick={() => onSelectSegment(index)}
               className={`w-full text-left p-3.5 rounded-xl transition-all duration-200 border flex items-start space-x-3 group relative ${
                 isActive
-                  ? "bg-electric/5 border-electric shadow-xs ring-1 ring-electric/30"
+                  ? "bg-electric/5 border-electric shadow-paper ring-1 ring-electric/30"
                   : isPast
-                  ? "bg-neutral-50/70 border-neutral-200 hover:bg-neutral-100/70 hover:border-neutral-300 text-neutral-600"
-                  : "bg-transparent border-transparent hover:bg-neutral-50 hover:border-neutral-200 text-neutral-600"
+                  ? "bg-muted/70 border-border hover:bg-muted/70 hover:border-neutral-300 text-muted-foreground"
+                  : "bg-transparent border-transparent hover:bg-muted hover:border-border text-muted-foreground"
               }`}
             >
               {/* Segment state badge */}
               <div
                 className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-mono font-bold transition-all duration-200 ${
                   isActive
-                    ? "bg-electric text-white shadow-xs scale-105"
+                    ? "bg-electric text-white shadow-paper scale-105"
                     : isPast
                     ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
-                    : "bg-neutral-100 text-neutral-500 group-hover:bg-neutral-200"
+                    : "bg-muted text-muted-foreground group-hover:bg-neutral-200"
                 }`}
               >
                 {isPast ? (
@@ -88,7 +88,7 @@ export const LessonOutline: React.FC<LessonOutlineProps> = ({
                 <div className="flex items-center justify-between">
                   <h4
                     className={`text-xs font-medium truncate ${
-                      isActive ? "text-[#0d0e11] font-semibold" : "text-neutral-700 group-hover:text-[#0d0e11]"
+                      isActive ? "text-foreground font-semibold" : "text-foreground/80 group-hover:text-foreground"
                     }`}
                   >
                     {segment.heading}
@@ -103,7 +103,7 @@ export const LessonOutline: React.FC<LessonOutlineProps> = ({
                   )}
                 </div>
 
-                <p className="text-[11px] text-neutral-500 line-clamp-1 mt-0.5 leading-snug">
+                <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5 leading-snug">
                   {segment.narration}
                 </p>
 

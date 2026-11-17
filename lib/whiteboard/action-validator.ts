@@ -1,4 +1,5 @@
 import { WhiteboardAction } from "@/lib/schemas/lesson-schema";
+import { safePathData } from "./safe-url";
 
 export function clamp(val: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, val));
@@ -64,11 +65,9 @@ export function sanitizeWhiteboardAction(action: WhiteboardAction): WhiteboardAc
         text: action.text.replace(/[<>]/g, ""),
       };
     case "drawPath":
-      // Basic sanity check: path shouldn't contain script or malicious patterns
-      if (typeof action.path !== "string" || action.path.length < 2) {
-        return { ...action, path: "M 0 0" };
-      }
-      return action;
+      // Path data reaches the DOM verbatim, so restrict it to the SVG path
+      // grammar rather than trusting whatever produced it.
+      return { ...action, path: safePathData(action.path) };
     case "erase":
     case "clear":
       return action;

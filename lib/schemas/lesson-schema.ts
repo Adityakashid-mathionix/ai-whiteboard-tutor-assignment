@@ -10,6 +10,12 @@ export const WhiteboardTextActionSchema = z.object({
   fontSize: z.number().min(10).max(60).optional().default(18),
   fill: z.string().optional().default("#0f172a"),
   fontWeight: z.enum(["normal", "bold", "600"]).optional().default("normal"),
+  // SVG text is anchored at `x`; "middle" is required whenever `x` is the
+  // centre of a heading, a box label or a circle label.
+  textAnchor: z.enum(["start", "middle", "end"]).optional().default("start"),
+  // "hand" renders in the Caveat marker face used for board headings and
+  // margin notes; "sans" is the default for labels; "mono" for figures.
+  font: z.enum(["hand", "sans", "mono"]).optional().default("sans"),
   details: z.string().optional(),
   tooltip: z.string().optional(),
 });
@@ -22,7 +28,7 @@ export const WhiteboardLineActionSchema = z.object({
   x2: z.number().min(0).max(1000),
   y2: z.number().min(0).max(600),
   stroke: z.string().optional().default("#2563eb"),
-  strokeWidth: z.number().min(1).max(14).optional().default(3),
+  strokeWidth: z.number().min(0.25).max(14).optional().default(3),
   strokeDasharray: z.string().optional(),
   details: z.string().optional(),
   tooltip: z.string().optional(),
@@ -35,7 +41,7 @@ export const WhiteboardCircleActionSchema = z.object({
   cy: z.number().min(0).max(600),
   r: z.number().min(2).max(400),
   stroke: z.string().optional().default("#0284c7"),
-  strokeWidth: z.number().min(1).max(14).optional().default(3),
+  strokeWidth: z.number().min(0.25).max(14).optional().default(3),
   strokeDasharray: z.string().optional(),
   fill: z.string().optional().default("none"),
   details: z.string().optional(),
@@ -51,7 +57,7 @@ export const WhiteboardRectActionSchema = z.object({
   height: z.number().min(2).max(600),
   rx: z.number().min(0).max(40).optional().default(8),
   stroke: z.string().optional().default("#059669"),
-  strokeWidth: z.number().min(1).max(14).optional().default(2),
+  strokeWidth: z.number().min(0.25).max(14).optional().default(2),
   strokeDasharray: z.string().optional(),
   fill: z.string().optional().default("rgba(241, 245, 249, 0.7)"),
   details: z.string().optional(),
@@ -63,7 +69,7 @@ export const WhiteboardPathActionSchema = z.object({
   id: z.string().optional().default(() => Math.random().toString(36).substring(2, 9)),
   path: z.string(),
   stroke: z.string().optional().default("#2563eb"),
-  strokeWidth: z.number().min(1).max(14).optional().default(3),
+  strokeWidth: z.number().min(0.25).max(14).optional().default(3),
   fill: z.string().optional().default("none"),
   details: z.string().optional(),
   tooltip: z.string().optional(),
@@ -77,7 +83,7 @@ export const WhiteboardArrowActionSchema = z.object({
   x2: z.number().min(0).max(1000),
   y2: z.number().min(0).max(600),
   stroke: z.string().optional().default("#0284c7"),
-  strokeWidth: z.number().min(1).max(14).optional().default(3),
+  strokeWidth: z.number().min(0.25).max(14).optional().default(3),
   label: z.string().optional(),
   details: z.string().optional(),
   tooltip: z.string().optional(),
@@ -92,6 +98,7 @@ export const WhiteboardHighlightActionSchema = z.object({
   height: z.number().min(4).max(600),
   color: z.string().optional().default("rgba(254, 240, 138, 0.45)"),
   details: z.string().optional(),
+  tooltip: z.string().optional(),
 });
 
 export const WhiteboardLabelActionSchema = z.object({
@@ -145,11 +152,40 @@ export const WhiteboardActionSchema = z.discriminatedUnion("type", [
   WhiteboardClearActionSchema,
 ]);
 
+
+/**
+ * Compact diagram brief from the model.
+ *
+ * The model describes WHAT to draw; the layout engine decides where every pixel
+ * goes. This keeps generations short enough to finish inside the token budget
+ * and guarantees a legible board regardless of the model's spatial reasoning.
+ */
+export const VisualHintSchema = z.object({
+  kind: z
+    .enum(["process", "cycle", "comparison", "parts", "timeline", "quantity", "concept"])
+    .optional(),
+  /** Ordered stages (process/cycle) or named parts (parts/concept). */
+  items: z.array(z.string().max(80)).max(6).optional(),
+  /** Two contrasted sides. */
+  left: z.object({ title: z.string().max(40), points: z.array(z.string().max(90)).max(3) }).optional(),
+  right: z.object({ title: z.string().max(40), points: z.array(z.string().max(90)).max(3) }).optional(),
+  /** Dated milestones. */
+  events: z.array(z.object({ when: z.string().max(12), label: z.string().max(60) })).max(5).optional(),
+  /** Measured values to compare as bars. */
+  values: z
+    .array(z.object({ label: z.string().max(40), value: z.number(), unit: z.string().max(12) }))
+    .max(5)
+    .optional(),
+});
+
+export type VisualHint = z.input<typeof VisualHintSchema>;
+
 export const LessonSegmentSchema = z.object({
   id: z.string(),
   heading: z.string().min(2),
   narration: z.string().min(10),
   keyTakeaway: z.string().optional().default(""),
+  visual: VisualHintSchema.optional(),
   visualQuery: z.string().optional(),
   visualType: z.string().optional(),
   visualDescription: z.string().optional(),
@@ -161,7 +197,6 @@ export const LessonSchema = z.object({
   title: z.string().min(2),
   topic: z.string().min(2),
   summary: z.string().min(10),
-  language: z.string().optional().default("en"),
   learningLevel: z.string().optional().default("beginner"),
   estimatedDuration: z.number().min(30).max(300).optional().default(120),
   keyTakeaways: z.array(z.string()).optional(),

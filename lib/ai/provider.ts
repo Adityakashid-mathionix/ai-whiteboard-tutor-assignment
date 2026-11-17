@@ -1,24 +1,25 @@
-import { Lesson } from "@/lib/schemas/lesson-schema";
-import { ChatMessage } from "@/types/lesson";
+import { GeneratedLesson } from "@/lib/cache/lesson-cache";
+import { LessonDigest } from "@/lib/schemas/api-schema";
 
 export interface AIProviderOptions {
   apiKey?: string;
   model?: string;
   baseUrl?: string;
+  /** Curriculum depth: beginner | intermediate | advanced. */
+  level?: string;
 }
 
-export interface LessonContext {
-  topic: string;
-  lesson: Lesson;
-  history: ChatMessage[];
+export interface QuestionContext {
+  lesson: LessonDigest;
+  history: { role: "user" | "assistant"; content: string }[];
 }
 
 export interface AIProvider {
   name: string;
-  generateLesson(topic: string, options?: AIProviderOptions): Promise<Lesson>;
+  generateLesson(topic: string, options?: AIProviderOptions): Promise<GeneratedLesson>;
   askQuestion(
     question: string,
-    context: LessonContext,
+    context: QuestionContext,
     options?: AIProviderOptions
   ): Promise<string>;
 }

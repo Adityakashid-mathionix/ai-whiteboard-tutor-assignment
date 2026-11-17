@@ -205,39 +205,44 @@ export const CURATED_TOPIC_ASSETS: Record<string, EducationalVisualAsset[]> = {
   ],
 };
 
+/** Tags hand-verified assets so the board can trust them. */
+function curated(assets: EducationalVisualAsset[]): EducationalVisualAsset[] {
+  return assets.map((asset) => ({ ...asset, curated: true }));
+}
+
 export async function getVisualAssetsForTopic(topic: string, query?: string): Promise<EducationalVisualAsset[]> {
   const normalized = topic.toLowerCase();
 
   // Check curated fast path first
   if (normalized.includes("heart") || normalized.includes("cardiac")) {
-    return CURATED_TOPIC_ASSETS.heart;
+    return curated(CURATED_TOPIC_ASSETS.heart);
   }
   if (normalized.includes("photo") || normalized.includes("plant") || normalized.includes("chlorophyll")) {
-    return CURATED_TOPIC_ASSETS.photosynthesis;
+    return curated(CURATED_TOPIC_ASSETS.photosynthesis);
   }
   if (normalized.includes("newton") || normalized.includes("third law") || normalized.includes("force")) {
-    return CURATED_TOPIC_ASSETS.newton;
+    return curated(CURATED_TOPIC_ASSETS.newton);
   }
   if (normalized.includes("react native") || normalized.includes("mobile architecture")) {
-    return CURATED_TOPIC_ASSETS.react_native;
+    return curated(CURATED_TOPIC_ASSETS.react_native);
   }
   if (normalized.includes("api") || normalized.includes("rest") || normalized.includes("backend")) {
-    return CURATED_TOPIC_ASSETS.api;
+    return curated(CURATED_TOPIC_ASSETS.api);
   }
   if (normalized.includes("laptop") || normalized.includes("notebook") || normalized.includes("portable computer")) {
-    return CURATED_TOPIC_ASSETS.laptop;
+    return curated(CURATED_TOPIC_ASSETS.laptop);
   }
   if (normalized.includes("rabies") || normalized.includes("lyssavirus") || normalized.includes("hydrophobia")) {
-    return CURATED_TOPIC_ASSETS.rabies;
+    return curated(CURATED_TOPIC_ASSETS.rabies);
   }
   if (normalized.includes("virus") || normalized.includes("infection") || normalized.includes("disease") || normalized.includes("pathogen")) {
-    return CURATED_TOPIC_ASSETS.virus;
+    return curated(CURATED_TOPIC_ASSETS.virus);
   }
   if (normalized.includes("brain") || normalized.includes("neuron") || normalized.includes("neural") || normalized.includes("nervous system")) {
-    return CURATED_TOPIC_ASSETS.brain;
+    return curated(CURATED_TOPIC_ASSETS.brain);
   }
   if (normalized.includes("computer") || normalized.includes("pc") || normalized.includes("hardware")) {
-    return CURATED_TOPIC_ASSETS.computer;
+    return curated(CURATED_TOPIC_ASSETS.computer);
   }
 
   // Otherwise perform live search on Wikimedia Commons

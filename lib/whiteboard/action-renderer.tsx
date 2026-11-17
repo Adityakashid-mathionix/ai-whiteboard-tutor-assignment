@@ -3,6 +3,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { WhiteboardAction } from "@/lib/schemas/lesson-schema";
+import { isAllowedImageUrl } from "./safe-url";
 
 interface WhiteboardActionRendererProps {
   action: WhiteboardAction;
@@ -11,6 +12,13 @@ interface WhiteboardActionRendererProps {
   isBlueprint?: boolean;
   actionIndex?: number;
 }
+
+/** Board type faces, matching the desk design system. */
+const FONT_STACKS = {
+  hand: "Caveat, Kalam, cursive",
+  sans: "Inter, system-ui, -apple-system, sans-serif",
+  mono: "'JetBrains Mono', ui-monospace, monospace",
+} as const;
 
 export const WhiteboardActionRenderer: React.FC<WhiteboardActionRendererProps> = ({
   action,
@@ -31,6 +39,10 @@ export const WhiteboardActionRenderer: React.FC<WhiteboardActionRendererProps> =
 
   switch (action.type) {
     case "drawImage": {
+      // Defence in depth: the normaliser already filters these, but the
+      // renderer also refuses anything outside the media allowlist.
+      if (!isAllowedImageUrl(action.url)) return null;
+
       return (
         <motion.g
           key={action.id}
@@ -123,9 +135,14 @@ export const WhiteboardActionRenderer: React.FC<WhiteboardActionRendererProps> =
           fontSize={action.fontSize || 16}
           fill={textColor}
           fontWeight={action.fontWeight || "normal"}
-          fontFamily="system-ui, -apple-system, sans-serif"
-          initial={{ opacity: 0, y: (action.y || 0) - 4 }}
-          animate={{ opacity: 1, y: action.y }}
+          textAnchor={action.textAnchor || "start"}
+          fontFamily={FONT_STACKS[action.font || "sans"]}
+          // Only opacity is animated. Framer Motion treats `y` as a transform,
+          // so animating it on an element that already carries a y attribute
+          // renders the text at double its intended position — which is what
+          // used to push every label outside its box.
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: entryDelay, ease: "easeOut" }}
           onClick={handleInteraction}
           className={`select-none ${hasDetails ? "cursor-pointer" : ""}`}

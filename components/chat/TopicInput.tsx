@@ -2,16 +2,17 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Compass, ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2, Pencil } from "lucide-react";
+import { LEARNING_LEVELS } from "@/lib/learning-levels";
 
 interface TopicInputProps {
-  onGenerate?: (topic: string, level?: string) => void;
+  onGenerate?: (topic: string, level: string) => void;
   isLoading?: boolean;
 }
 
 export const TopicInput: React.FC<TopicInputProps> = ({ onGenerate, isLoading = false }) => {
   const [topic, setTopic] = useState("");
-  const [level, setLevel] = useState<"beginner" | "intermediate" | "advanced">("beginner");
+  const [level, setLevel] = useState("beginner");
   const router = useRouter();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -20,67 +21,71 @@ export const TopicInput: React.FC<TopicInputProps> = ({ onGenerate, isLoading = 
 
     if (onGenerate) {
       onGenerate(topic.trim(), level);
-    } else {
-      router.push(`/studio?topic=${encodeURIComponent(topic.trim())}&level=${level}`);
+      return;
     }
+
+    const params = new URLSearchParams({ topic: topic.trim(), level });
+    router.push(`/studio?${params.toString()}`);
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-3">
+    <div className="w-full max-w-2xl mx-auto space-y-4">
       <form onSubmit={handleSubmit}>
-        <div className="relative flex items-center rounded-2xl bg-white border border-[#e2e5eb] shadow-[0_4px_25px_rgba(0,0,0,0.06)] p-2 focus-within:border-electric focus-within:ring-4 focus-within:ring-electric/15 transition-all duration-300">
-          <div className="pl-3 pr-2 text-electric transition-transform duration-300 group-focus-within:rotate-45">
-            <Compass className="w-5 h-5" />
-          </div>
+        <div className="relative flex items-center rounded-xl bg-paper border border-border p-2 shadow-paper transition-all duration-300 focus-within:border-electric focus-within:shadow-electric">
+          <span className="pl-3 pr-2 text-electric">
+            <Pencil className="w-5 h-5" />
+          </span>
           <input
             type="text"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="Enter any educational topic (e.g. How the Human Heart Works, Black Holes, TCP/IP)..."
+            placeholder="Teach me anything — photosynthesis, TCP handshakes, the French Revolution…"
             disabled={isLoading}
-            className="flex-1 bg-transparent px-2 py-3 text-sm text-[#0d0e11] placeholder-neutral-400 focus:outline-none"
+            aria-label="Lesson topic"
+            className="flex-1 bg-transparent px-2 py-3 text-sm text-foreground placeholder-muted-foreground/70 focus:outline-none"
           />
           <button
             type="submit"
             disabled={isLoading || !topic.trim()}
-            className="flex items-center space-x-2 px-5 py-3 rounded-xl bg-electric hover:bg-[#0958d9] text-white font-mono font-semibold text-xs shadow-md shadow-electric/25 disabled:opacity-40 transition-all duration-200 hover:scale-105 active:scale-95 flex-shrink-0"
+            className="btn-interactive flex items-center gap-2 rounded-lg bg-electric px-5 py-3 font-mono text-xs font-semibold text-white shadow-paper disabled:opacity-40 flex-shrink-0 hover:bg-electric-hover"
           >
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Synthesizing...</span>
+                <span>Preparing…</span>
               </>
             ) : (
               <>
-                <span>Launch Lesson</span>
-                <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
+                <span>Start the lesson</span>
+                <ArrowRight className="w-4 h-4" />
               </>
             )}
           </button>
         </div>
       </form>
 
-      {/* Learning Depth Level Selector */}
-      <div className="flex items-center justify-center space-x-2 text-xs">
-        <span className="text-neutral-500 text-[11px] font-mono mr-1">Curriculum Depth:</span>
-        {[
-          { id: "beginner", label: "Foundational", desc: "Intuitive analogies" },
-          { id: "intermediate", label: "Core Academic", desc: "Mechanisms & formulas" },
-          { id: "advanced", label: "Deep Dive", desc: "Technical architecture" },
-        ].map((lvl) => (
-          <button
-            key={lvl.id}
-            type="button"
-            onClick={() => setLevel(lvl.id as any)}
-            className={`px-3.5 py-1 rounded-full text-xs font-mono transition-all duration-200 ${
-              level === lvl.id
-                ? "bg-electric text-white shadow-sm font-semibold scale-105"
-                : "text-neutral-600 hover:text-[#0d0e11] bg-white border border-[#e2e5eb] hover:border-neutral-300 active:scale-95"
-            }`}
-          >
-            {lvl.label}
-          </button>
-        ))}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
+        <div className="flex items-center gap-2">
+          <span className="eyebrow">depth</span>
+          <div className="flex items-center gap-1.5">
+            {LEARNING_LEVELS.map((lvl) => (
+              <button
+                key={lvl.id}
+                type="button"
+                title={lvl.desc}
+                onClick={() => setLevel(lvl.id)}
+                className={`rounded-full px-3 py-1 font-mono text-[11px] transition-all ${
+                  level === lvl.id
+                    ? "bg-electric text-white shadow-paper"
+                    : "border border-border bg-paper text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {lvl.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
       </div>
     </div>
   );

@@ -1,16 +1,34 @@
-@import url("https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&display=swap");
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ===========================================================================
+   Design tokens — warm paper desk, handwritten display type, single accent.
+   Fonts are loaded from app/layout.tsx so they are discovered in the document
+   head rather than after this stylesheet parses.
+   ========================================================================= */
 :root {
-  --background: #f8f9fb;
-  --foreground: #0d0e11;
+  --background: #f7f5f1;
+  --foreground: #1b1b1b;
+  --paper: #ffffff;
+  --paper-warm: #fcfaf6;
+  --paper-sunk: #f2f0ec;
+  --border: #e0ddda;
+  --border-strong: #dad7d3;
+  --muted: #edebe7;
+  --muted-foreground: #575552;
+  --electric: #1677ff;
+  --electric-hover: #0958d9;
+  --tape: rgba(213, 205, 192, 0.55);
+
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-serif: "Newsreader", Georgia, serif;
-  --font-mono: "JetBrains Mono", monospace;
-  --font-handwritten: "Caveat", cursive;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-display: "Caveat", "Kalam", cursive;
+
+  --shadow-paper: 0 1px 2px rgba(60, 52, 40, 0.06), 0 6px 16px -4px rgba(60, 52, 40, 0.1);
+  --shadow-lift: 0 2px 4px rgba(60, 52, 40, 0.08), 0 14px 28px -6px rgba(60, 52, 40, 0.16);
+  --shadow-sticky: 0 1px 1px rgba(60, 52, 40, 0.08), 0 8px 14px -6px rgba(60, 52, 40, 0.22);
 }
 
 body {
@@ -23,68 +41,93 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Handwritten script class from portfolio */
-.handwritten {
-  font-family: "Caveat", cursive;
+/* ===========================================================================
+   Typography primitives
+   ========================================================================= */
+
+/* Handwritten display type, as used for every section title. */
+.handwritten,
+.display-hand {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
-/* Custom sleek light scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* Small mono eyebrow above a section title. */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
 }
 
-::-webkit-scrollbar-track {
-  background: #f1f3f7;
+/* Long-form reading prose. */
+.prose-paper {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: #2c2a27;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #cbd2df;
-  border-radius: 9999px;
-}
+/* ===========================================================================
+   Desk surfaces
+   ========================================================================= */
 
-::-webkit-scrollbar-thumb:hover {
-  background: #9aa5b8;
-}
-
-/* Digital Porcelain Smartboard Canvas */
-.smartboard-porcelain {
-  background-color: #ffffff;
-  background-size: 24px 24px;
-  background-image: radial-gradient(
-    circle,
-    rgba(20, 24, 38, 0.06) 1.2px,
-    transparent 1.2px
-  );
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-
-/* Midnight Blueprint Smartboard Canvas (Engineering Dark Mode) */
-.blueprint-grid {
-  background-color: #080d1a;
-  background-size: 28px 28px;
-  background-image: 
-    linear-gradient(to right, rgba(56, 189, 248, 0.08) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(56, 189, 248, 0.08) 1px, transparent 1px);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 0 60px rgba(15, 23, 42, 0.8);
-}
-
-/* Subtle editorial desk grid */
-.editorial-desk-grid {
-  background-image: linear-gradient(
-      to right,
-      rgba(0, 0, 0, 0.035) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0.035) 1px,
-      transparent 1px
-    );
+/* The faint ruled grid of the desk blotter. */
+.desk-grid {
+  background-image:
+    linear-gradient(to right, rgba(60, 52, 40, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(60, 52, 40, 0.035) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 
-/* Tactile pushpins */
+/* Paper card: the default container for content. */
+.paper-card {
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-paper);
+}
+
+/* A strip of masking tape pinning something to the desk. */
+.tape-strip {
+  position: absolute;
+  height: 22px;
+  width: 78px;
+  background: var(--tape);
+  box-shadow: 0 1px 2px rgba(60, 52, 40, 0.12);
+}
+
+/* Section divider with a torn-paper feel. */
+.section-rule {
+  border-top: 1px solid var(--border);
+}
+
+/* ===========================================================================
+   Smartboard canvas
+   ========================================================================= */
+
+/* Porcelain whiteboard with a faint dot grid. */
+.smartboard-porcelain {
+  background-color: #ffffff;
+  background-size: 26px 26px;
+  background-image: radial-gradient(circle, rgba(27, 27, 27, 0.055) 1.1px, transparent 1.1px);
+}
+
+/* Midnight blueprint alternative. */
+.blueprint-grid {
+  background-color: #0b1120;
+  background-size: 28px 28px;
+  background-image:
+    linear-gradient(to right, rgba(56, 189, 248, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(56, 189, 248, 0.08) 1px, transparent 1px);
+  box-shadow: inset 0 0 60px rgba(15, 23, 42, 0.8);
+}
+
+/* ===========================================================================
+   Desk objects
+   ========================================================================= */
 .pushpin-blue {
   background: radial-gradient(circle at 32% 28%, #cfe2ff, #3b8bff 35%, #1677ff 55%, #0a3a8a);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
@@ -95,45 +138,68 @@ body {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-/* Tactile sticky notes */
 .sticky-note {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sticky);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
 }
 .sticky-note:hover {
-  transform: translateY(-4px) scale(1.02) rotate(1deg);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+  transform: translateY(-4px) rotate(1deg);
+  box-shadow: var(--shadow-lift);
 }
 
-/* Interactive Card & Button Smooth Micro-interactions */
+.polaroid {
+  background: var(--paper);
+  padding: 10px 10px 34px;
+  border-radius: 4px;
+  box-shadow: var(--shadow-lift);
+}
+
+/* ===========================================================================
+   Micro-interactions
+   ========================================================================= */
 .card-hover-smooth {
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease,
+    border-color 0.25s ease;
 }
 .card-hover-smooth:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-lift);
 }
 
 .btn-interactive {
-  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease, background-color 0.18s ease;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease,
+    background-color 0.18s ease;
 }
 .btn-interactive:hover {
-  transform: scale(1.04);
+  transform: translateY(-1px);
 }
 .btn-interactive:active {
-  transform: scale(0.96);
+  transform: scale(0.97);
 }
 
-/* Teacher pointer arm gentle gesture */
-@keyframes teacher-point {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-4deg); }
-  50% { transform: rotate(2deg); }
-  75% { transform: rotate(-2deg); }
+/* Custom scrollbars tuned to the warm palette. */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: var(--paper-sunk);
+}
+::-webkit-scrollbar-thumb {
+  background: #cfcac2;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b3ada3;
 }
 
-/* Audio equalizer bars */
-@keyframes eq-bar {
-  0% { transform: scaleY(0.4); }
-  100% { transform: scaleY(1); }
+/* Respect reduced-motion preferences for every decorative animation. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

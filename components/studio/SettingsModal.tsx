@@ -1,7 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Key, X, Check, ExternalLink, ShieldCheck } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Check, ExternalLink, Key, Mic2, Play, X } from "lucide-react";
+import {
+  groupVoices,
+  isHighQualityVoiceName,
+  VOICE_STYLES,
+  VoiceStyleId,
+} from "@/lib/voice-presets";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -10,6 +16,54 @@ interface SettingsModalProps {
   onSaveApiKey: (key: string) => void;
   selectedModel: string;
   onSaveModel: (model: string) => void;
+  /** Voices the browser offers for narration. */
+  voices: SpeechSynthesisVoice[];
+  selectedVoice: SpeechSynthesisVoice | null;
+  onSelectVoice: (voice: SpeechSynthesisVoice | null) => void;
+  onPreviewVoice: (voice: SpeechSynthesisVoice | null) => void;
+  /** Speaking style applied on top of the chosen voice. */
+  voiceStyle: VoiceStyleId;
+  onSelectVoiceStyle: (style: VoiceStyleId) => void;
+}
+
+const MODELS = [
+  {
+    id: "nvidia/nemotron-3.5-lightning-30b-a3b",
+    name: "Nemotron 3.5 Lightning",
+    desc: "Recommended. Fast, and reliable at structured output.",
+  },
+  {
+    id: "nvidia/nemotron-3.5-bolt-e4b",
+    name: "Nemotron 3.5 Bolt",
+    desc: "Lowest latency, shorter lessons.",
+  },
+  {
+    id: "stepfun-ai/step-5-preview",
+    name: "StepFun Step 5",
+    desc: "Slower, stronger on deep technical topics.",
+  },
+  {
+    id: "minimaxai/minimax-m3.1-flash",
+    name: "MiniMax M3.1 Flash",
+    desc: "Balanced speed and detail.",
+  },
+];
+
+/** Turns "Microsoft Aria Online (Natural) - English (United States)" into "Aria". */
+function shortVoiceName(voice: SpeechSynthesisVoice): string {
+  const trimmed = voice.name
+    .replace(/^(Microsoft|Google|Apple)\s+/i, "")
+    .replace(/\s*\((Natural|Enhanced|Premium)\)/i, "")
+    .replace(/\s*Online.*$/i, "")
+    .replace(/\s*-\s*English.*$/i, "")
+    .trim();
+  return trimmed || voice.name;
+}
+
+function voiceQuality(voice: SpeechSynthesisVoice): string | null {
+  if (/natural|neural|wavenet/i.test(voice.name)) return "natural";
+  if (/enhanced|premium/i.test(voice.name)) return "enhanced";
+  return null;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -19,6 +73,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onSaveApiKey,
   selectedModel,
   onSaveModel,
+  voices,
+  selectedVoice,
+  onSelectVoice,
+  onPreviewVoice,
+  voiceStyle,
+  onSelectVoiceStyle,
 }) => {
   const [localKey, setLocalKey] = useState(apiKey);
   const [localModel, setLocalModel] = useState(selectedModel);
@@ -28,6 +88,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setLocalKey(apiKey);
     setLocalModel(selectedModel);
   }, [apiKey, selectedModel, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -41,129 +110,190 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }, 600);
   };
 
-  const models = [
-    {
-      id: "nvidia/nemotron-3.5-lightning-30b-a3b",
-      name: "NVIDIA Nemotron 3.5 Lightning (Recommended)",
-      desc: "NVIDIA's official high-speed instruction & visual reasoning model (~1-3s).",
-    },
-    {
-      id: "nvidia/nemotron-3.5-bolt-e4b",
-      name: "NVIDIA Nemotron 3.5 Bolt",
-      desc: "Ultra-fast low-latency reasoning model.",
-    },
-    {
-      id: "stepfun-ai/step-5-preview",
-      name: "StepFun Step 5",
-      desc: "Advanced reasoning and deep curriculum explanations.",
-    },
-    {
-      id: "minimaxai/minimax-m3.1-flash",
-      name: "MiniMax M3.1 Flash",
-      desc: "Balanced speed and detailed teaching synthesis.",
-    },
-  ];
+  // English voices first; the narration is written in English.
+  const englishVoices = voices.filter((v) => v.lang.toLowerCase().startsWith("en"));
+  const voiceList = englishVoices.length > 0 ? englishVoices : voices;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-md bg-white border border-[#e2e5eb] rounded-2xl shadow-2xl overflow-hidden p-6 text-[#0d0e11]">
-        <div className="flex items-center justify-between pb-4 border-b border-[#f1f3f7]">
-          <div className="flex items-center space-x-2">
-            <Key className="w-5 h-5 text-electric" />
-            <h3 className="text-base font-serif font-bold text-[#0d0e11]">AI Provider Settings</h3>
-          </div>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 p-4 backdrop-blur-sm"
+      onClick={onClose}
+      role="presentation"
+    >
+      <div
+        className="max-h-[88vh] w-full max-w-md overflow-y-auto rounded-xl border border-border bg-paper p-6 shadow-lift"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Studio settings"
+      >
+        <div className="flex items-center justify-between border-b border-border pb-4">
+          <h3 className="handwritten text-2xl">Settings</h3>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-neutral-400 hover:text-[#0d0e11] hover:bg-neutral-100 transition-colors"
+            aria-label="Close settings"
+            className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
           >
-            <X className="w-4 h-4" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="space-y-4 pt-4">
-          {/* API Key */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-mono font-semibold text-neutral-700">
-                NVIDIA NIM API Key
-              </label>
-              <a
-                href="https://build.nvidia.com"
-                target="_blank"
-                rel="noreferrer"
-                className="text-[11px] font-mono text-electric hover:underline flex items-center space-x-1"
-              >
-                <span>Get free key</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
-            <input
-              type="password"
-              value={localKey}
-              onChange={(e) => setLocalKey(e.target.value)}
-              placeholder="nvapi-..."
-              className="w-full bg-neutral-50 border border-neutral-200 focus:border-electric rounded-xl px-3.5 py-2.5 text-xs text-[#0d0e11] placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-electric/20 font-mono"
-            />
-            <p className="text-[11px] text-neutral-500 mt-1.5 flex items-center space-x-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-              <span>Keys remain server-side and are never exposed in client bundles.</span>
+        {/* Narration voice */}
+        <section className="py-5">
+          <p className="eyebrow flex items-center gap-1.5">
+            <Mic2 className="h-3 w-3" />
+            tutor voice
+          </p>
+
+          {voiceList.length === 0 ? (
+            <p className="mt-2 text-[13px] text-muted-foreground">
+              Your browser has not offered any voices yet. Try reopening this panel in a
+              moment, or use Chrome or Edge for the natural-sounding ones.
             </p>
-          </div>
-
-          {/* Model selection */}
-          <div>
-            <label className="text-xs font-mono font-semibold text-neutral-700 block mb-2">
-              Inference Model
-            </label>
-            <div className="space-y-2">
-              {models.map((m) => (
-                <label
-                  key={m.id}
-                  className={`flex flex-col p-2.5 rounded-xl border text-left cursor-pointer transition-colors ${
-                    localModel === m.id
-                      ? "bg-electric/5 border-electric text-[#0d0e11] ring-1 ring-electric/30"
-                      : "bg-neutral-50/70 border-neutral-200 hover:bg-neutral-100/70 text-neutral-600"
-                  }`}
+          ) : (
+            <>
+              <div className="mt-2 flex items-center gap-2">
+                <select
+                  value={selectedVoice?.name || ""}
+                  onChange={(e) => {
+                    const voice = voiceList.find((v) => v.name === e.target.value) || null;
+                    onSelectVoice(voice);
+                    onPreviewVoice(voice);
+                  }}
+                  aria-label="Narration voice"
+                  className="min-w-0 flex-1 rounded-lg border border-border bg-paper-warm px-3 py-2 text-[13px] text-foreground focus:border-electric focus:outline-none"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-[#0d0e11]">{m.name}</span>
-                    <input
-                      type="radio"
-                      name="model"
-                      value={m.id}
-                      checked={localModel === m.id}
-                      onChange={() => setLocalModel(m.id)}
-                      className="text-electric focus:ring-electric"
-                    />
-                  </div>
-                  <span className="text-[10px] text-neutral-500 mt-0.5">{m.desc}</span>
-                </label>
-              ))}
-            </div>
-          </div>
+                  {groupVoices(voiceList).map((group) => (
+                    <optgroup key={group.label} label={group.label}>
+                      {group.voices.map((voice) => {
+                        const quality = voiceQuality(voice);
+                        return (
+                          <option key={voice.name} value={voice.name}>
+                            {shortVoiceName(voice)}
+                            {quality ? ` · ${quality}` : ""}
+                          </option>
+                        );
+                      })}
+                    </optgroup>
+                  ))}
+                </select>
 
-          {/* Save Action */}
-          <div className="pt-2 flex items-center justify-end space-x-2">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-mono text-neutral-600 hover:text-[#0d0e11] hover:bg-neutral-100 transition-colors"
+                <button
+                  onClick={() => onPreviewVoice(selectedVoice)}
+                  title="Hear this voice"
+                  className="btn-interactive flex items-center gap-1.5 rounded-lg border border-border bg-paper px-3 py-2 font-mono text-[11px] text-foreground/80"
+                >
+                  <Play className="h-3 w-3 text-electric" />
+                  test
+                </button>
+              </div>
+
+              {/* Speaking style: rate and pitch change delivery far more than the
+                  voice list suggests, so they are offered as named styles. */}
+              <p className="eyebrow mt-4">speaking style</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {VOICE_STYLES.map((style) => (
+                  <button
+                    key={style.id}
+                    title={style.desc}
+                    onClick={() => {
+                      onSelectVoiceStyle(style.id);
+                      onPreviewVoice(selectedVoice);
+                    }}
+                    className={`rounded-full px-3 py-1 font-mono text-[11px] transition-colors ${
+                      voiceStyle === style.id
+                        ? "bg-electric text-white"
+                        : "border border-border bg-paper text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {style.label}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1.5 text-[12px] leading-snug text-muted-foreground">
+                {VOICE_STYLES.find((s) => s.id === voiceStyle)?.desc}
+              </p>
+
+              <p className="mt-3 text-[12px] leading-snug text-muted-foreground">
+                Voices come from your own device, so the list differs per browser and is
+                grouped by accent. The ones marked{" "}
+                <span className="font-mono text-[11px]">natural</span> sound closest to a
+                person. Both choices are remembered.
+              </p>
+            </>
+          )}
+        </section>
+
+        {/* API key */}
+        <section className="border-t border-border py-5">
+          <label htmlFor="api-key" className="eyebrow flex items-center gap-1.5">
+            <Key className="h-3 w-3" />
+            your nvidia api key
+          </label>
+          <input
+            id="api-key"
+            type="password"
+            value={localKey}
+            onChange={(e) => setLocalKey(e.target.value)}
+            placeholder="nvapi-..."
+            className="mt-2 w-full rounded-lg border border-border bg-paper-warm px-3 py-2 font-mono text-[13px] text-foreground placeholder-muted-foreground/60 focus:border-electric focus:outline-none"
+          />
+          <p className="mt-2 text-[12px] leading-snug text-muted-foreground">
+            Optional. Without one, lessons use the deployment&apos;s shared key, which is
+            rate limited. The key is stored in this browser only and sent to this app&apos;s
+            own API route.{" "}
+            <a
+              href="https://build.nvidia.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-0.5 text-electric hover:underline"
             >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              className="px-5 py-2 rounded-xl text-xs font-mono font-semibold bg-electric hover:bg-[#0958d9] text-white transition-all flex items-center space-x-1.5 shadow-sm active:scale-95"
-            >
-              {savedSuccess ? (
-                <>
-                  <Check className="w-3.5 h-3.5" />
-                  <span>Saved</span>
-                </>
-              ) : (
-                <span>Save Settings</span>
-              )}
-            </button>
+              get a free key
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </p>
+        </section>
+
+        {/* Model */}
+        <section className="border-t border-border py-5">
+          <p className="eyebrow">model</p>
+          <div className="mt-2 space-y-1.5">
+            {MODELS.map((model) => (
+              <button
+                key={model.id}
+                onClick={() => setLocalModel(model.id)}
+                className={`w-full rounded-lg border px-3 py-2.5 text-left transition-colors ${
+                  localModel === model.id
+                    ? "border-electric bg-electric/5"
+                    : "border-border bg-paper hover:bg-muted"
+                }`}
+              >
+                <span className="flex items-center justify-between gap-2">
+                  <span className="text-[13px] font-semibold">{model.name}</span>
+                  {localModel === model.id && <Check className="h-3.5 w-3.5 text-electric" />}
+                </span>
+                <span className="mt-0.5 block text-[12px] text-muted-foreground">
+                  {model.desc}
+                </span>
+              </button>
+            ))}
           </div>
+        </section>
+
+        <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
+          <button
+            onClick={onClose}
+            className="rounded-lg px-3 py-2 font-mono text-xs text-muted-foreground hover:text-foreground"
+          >
+            cancel
+          </button>
+          <button
+            onClick={handleSave}
+            className="btn-interactive flex items-center gap-1.5 rounded-lg bg-electric px-4 py-2 font-mono text-xs font-semibold text-white"
+          >
+            {savedSuccess ? <Check className="h-3.5 w-3.5" /> : null}
+            {savedSuccess ? "saved" : "save"}
+          </button>
         </div>
       </div>
     </div>

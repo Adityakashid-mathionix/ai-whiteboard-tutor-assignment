@@ -2,6 +2,11 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { PlaybackSpeed } from "@/types/lesson";
+import {
+  DEFAULT_VOICE_STYLE,
+  getVoiceStyle,
+  VoiceStyleId,
+} from "@/lib/voice-presets";
 
 interface UseSpeechOptions {
   onStart?: () => void;
@@ -12,37 +17,48 @@ interface UseSpeechOptions {
 }
 
 /**
- * Premium voice ranking — tries to find the most natural, warm, human-sounding
- * voice available on the user's device. Prioritises Microsoft Edge neural voices,
- * then macOS premium voices, then Google voices, then any English voice.
+ * Voice ranking, most natural first. Patterns are matched inside the language
+ * the lesson is taught in, so a Hindi lesson never gets read by an English voice.
  */
-const PREMIUM_VOICE_PATTERNS: { name: RegExp; lang: RegExp }[] = [
-  // Microsoft Edge neural TTS voices — extremely natural
-  { name: /Microsoft\s+(Aria|Jenny|Guy|Eric|Sara|Steffan)/i, lang: /^en/i },
-  // Microsoft Online (Natural) voices
-  { name: /Natural/i, lang: /^en/i },
-  // macOS high-quality voices
-  { name: /Samantha|Ava|Allison|Tom|Karen/i, lang: /^en/i },
-  // Google TTS voices
-  { name: /Google\s+UK\s+English\s+(Female|Male)/i, lang: /^en/i },
-  { name: /Google\s+US\s+English/i, lang: /^en/i },
-  // Any voice with "Neural" or "Premium" or "Enhanced" in its name
-  { name: /Neural|Premium|Enhanced|Wavenet/i, lang: /^en/i },
-  // Any English voice as final fallback
-  { name: /.*/i, lang: /^en/i },
+/** Where a hand-picked voice and style are remembered between visits. */
+const VOICE_STORAGE_KEY = "braynix_voice_name";
+const STYLE_STORAGE_KEY = "braynix_voice_style";
+
+function readSavedVoiceName(): string | null {
+  try {
+    return localStorage.getItem(VOICE_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+const PREMIUM_VOICE_PATTERNS: RegExp[] = [
+  /Microsoft\s+(Aria|Jenny|Guy|Eric|Sara|Steffan|Swara|Madhur)/i,
+  /Natural|Neural|Premium|Enhanced|Wavenet/i,
+  /Samantha|Ava|Allison|Tom|Karen/i,
+  /Google/i,
+  /.*/,
 ];
 
-function selectBestVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
+function selectBestVoice(
+  voices: SpeechSynthesisVoice[],
+  speechLang: string
+): SpeechSynthesisVoice | null {
   if (voices.length === 0) return null;
 
-  for (const pattern of PREMIUM_VOICE_PATTERNS) {
-    const match = voices.find(
-      (v) => pattern.name.test(v.name) && pattern.lang.test(v.lang)
-    );
-    if (match) return match;
+  const prefix = speechLang.split("-")[0].toLowerCase();
+  const exact = voices.filter((v) => v.lang.toLowerCase().replace("_", "-") === speechLang.toLowerCase());
+  const sameLanguage = voices.filter((v) => v.lang.toLowerCase().startsWith(prefix));
+  const pools = [exact, sameLanguage, voices];
+
+  for (const pool of pools) {
+    if (pool.length === 0) continue;
+    for (const pattern of PREMIUM_VOICE_PATTERNS) {
+      const match = pool.find((v) => pattern.test(v.name));
+      if (match) return match;
+    }
   }
 
-  // Absolute fallback: first voice
   return voices[0];
 }
 
@@ -53,16 +69,25 @@ export function useSpeech({
   speed = 1,
   isMuted = false,
 }: UseSpeechOptions = {}) {
-  const [isSupported, setIsSupported] = useState<boolean>(true);
-  const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
-  const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [isSupported, setIsSupported] = useState(true);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
+  const [voiceStyle, setVoiceStyleState] = useState<VoiceStyleId>(DEFAULT_VOICE_STYLE);
+  /** 0 → 1 through the current narration; drives the board's drawing reveal. */
+  const [progress, setProgress] = useState(0);
 
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const muteTimerRef = useRef<NodeJS.Timeout | null>(null);
+  /** The narration currently being spoken, and how far into it we have got. */
+  const currentTextRef = useRef("");
+  const charIndexRef = useRef(0);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const voicePinnedRef = useRef(false);
 
-  // Initialize and load voices
+  const speechLang = "en-US";
+
   useEffect(() => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
       setIsSupported(false);
@@ -73,43 +98,136 @@ export function useSpeech({
       const voices = window.speechSynthesis.getVoices();
       setAvailableVoices(voices);
 
-      // Only auto-select if the user hasn't manually chosen
       setSelectedVoice((prev) => {
-        if (prev && voices.includes(prev)) return prev;
-        return selectBestVoice(voices);
+        // An explicit choice wins, including one saved from a previous visit.
+        if (prev && voicePinnedRef.current && voices.includes(prev)) return prev;
+
+        const savedName = readSavedVoiceName();
+        if (savedName) {
+          const saved = voices.find((v) => v.name === savedName);
+          if (saved) {
+            voicePinnedRef.current = true;
+            return saved;
+          }
+        }
+
+        return selectBestVoice(voices, speechLang);
       });
     };
 
-    loadVoices();
-    if (window.speechSynthesis.onvoiceschanged !== undefined) {
-      window.speechSynthesis.onvoiceschanged = loadVoices;
+    try {
+      const savedStyle = localStorage.getItem(STYLE_STORAGE_KEY);
+      if (savedStyle) setVoiceStyleState(getVoiceStyle(savedStyle).id);
+    } catch {
+      // Storage blocked: the default style applies.
     }
 
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+
     return () => {
-      if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-      }
-      if (muteTimerRef.current) {
-        clearTimeout(muteTimerRef.current);
-      }
+      window.speechSynthesis.onvoiceschanged = null;
     };
   }, []);
 
-  const stop = useCallback(() => {
-    if (muteTimerRef.current) {
-      clearTimeout(muteTimerRef.current);
-      muteTimerRef.current = null;
+  const clearTimers = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
     }
+    if (tickRef.current) {
+      clearInterval(tickRef.current);
+      tickRef.current = null;
+    }
+  }, []);
 
+  const stop = useCallback(() => {
+    clearTimers();
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
     }
     setIsSpeaking(false);
     setIsPaused(false);
+    setProgress(0);
+  }, [clearTimers]);
+
+  // Cancel any narration still queued when the studio unmounts.
+  useEffect(() => stop, [stop]);
+
+  const pickVoice = useCallback(
+    (voice: SpeechSynthesisVoice | null) => {
+      voicePinnedRef.current = Boolean(voice);
+      setSelectedVoice(voice);
+
+      try {
+        if (voice) localStorage.setItem(VOICE_STORAGE_KEY, voice.name);
+        else localStorage.removeItem(VOICE_STORAGE_KEY);
+      } catch {
+        // Storage blocked: the choice still holds for this session.
+      }
+    },
+    []
+  );
+
+  /** Speaks a short sample so a voice can be judged before committing to it. */
+  const previewVoice = useCallback(
+    (voice: SpeechSynthesisVoice | null) => {
+      if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+      window.speechSynthesis.cancel();
+
+      const sample = new SpeechSynthesisUtterance(
+        "Right, let us look at how this actually works."
+      );
+      if (voice) sample.voice = voice;
+      sample.lang = voice?.lang || speechLang;
+      const style = getVoiceStyle(voiceStyle);
+      sample.rate = Math.max(0.5, Math.min(speed * style.rate, 2));
+      sample.pitch = Math.max(0.5, Math.min(style.pitch, 2));
+
+      window.speechSynthesis.speak(sample);
+    },
+    [speechLang, speed, voiceStyle]
+  );
+
+  const setVoiceStyle = useCallback((id: VoiceStyleId) => {
+    setVoiceStyleState(id);
+    try {
+      localStorage.setItem(STYLE_STORAGE_KEY, id);
+    } catch {
+      // Storage blocked: the choice still holds for this session.
+    }
   }, []);
 
-  const speak = useCallback(
+  /** Simulated playback used when muted or when speech synthesis is absent. */
+  const runSilentPlayback = useCallback(
     (text: string) => {
+      const words = text.trim().split(/\s+/).length;
+      const durationMs = Math.max(3000, (words / (2.4 * speed)) * 1000);
+      const startedAt = Date.now();
+
+      setIsSpeaking(true);
+      setIsPaused(false);
+      setProgress(0);
+      onStart?.();
+
+      tickRef.current = setInterval(() => {
+        setProgress(Math.min(1, (Date.now() - startedAt) / durationMs));
+      }, 120);
+
+      timerRef.current = setTimeout(() => {
+        clearTimers();
+        setProgress(1);
+        setIsSpeaking(false);
+        onEnd?.();
+      }, durationMs);
+    },
+    [clearTimers, onEnd, onStart, speed]
+  );
+
+  const speak = useCallback(
+    (text: string, options: { fromCharIndex?: number } = {}) => {
+      const offset = options.fromCharIndex ?? 0;
       stop();
 
       if (!text || text.trim().length === 0) {
@@ -117,60 +235,57 @@ export function useSpeech({
         return;
       }
 
-      // If muted or Web Speech is not supported, simulate segment duration smoothly
       if (isMuted || !isSupported) {
-        setIsSpeaking(true);
-        setIsPaused(false);
-        onStart?.();
-
-        const wordCount = text.trim().split(/\s+/).length;
-        const durationMs = Math.max(3000, (wordCount / (2.2 * speed)) * 1000);
-
-        muteTimerRef.current = setTimeout(() => {
-          setIsSpeaking(false);
-          onEnd?.();
-        }, durationMs);
-
+        runSilentPlayback(text);
         return;
       }
 
-      const utterance = new SpeechSynthesisUtterance(text);
+      currentTextRef.current = text;
+      charIndexRef.current = offset;
+
+      const utterance = new SpeechSynthesisUtterance(text.slice(offset));
       utteranceRef.current = utterance;
 
-      if (selectedVoice) {
-        utterance.voice = selectedVoice;
-      }
+      if (selectedVoice) utterance.voice = selectedVoice;
+      utterance.lang = selectedVoice?.lang || speechLang;
 
-      // --- Voice Tuning for warm, teacher-like delivery ---
-      utterance.rate = Math.max(0.7, Math.min(speed * 0.92, 1.8));  // slightly slower = calmer
-      utterance.pitch = 1.05;   // slightly warm, not robotic
-      utterance.volume = 0.95;  // not blasting
+      // The chosen style shapes delivery on top of the player's speed.
+      const style = getVoiceStyle(voiceStyle);
+      utterance.rate = Math.max(0.5, Math.min(speed * style.rate, 2));
+      utterance.pitch = Math.max(0.5, Math.min(style.pitch, 2));
+      utterance.volume = 1;
 
       utterance.onstart = () => {
         setIsSpeaking(true);
         setIsPaused(false);
+        setProgress(text.length ? offset / text.length : 0);
         onStart?.();
       };
 
+      // Word boundaries give the board something real to sync its drawing to.
+      utterance.onboundary = (event: SpeechSynthesisEvent) => {
+        if (!text.length) return;
+        charIndexRef.current = offset + event.charIndex;
+        setProgress(Math.min(1, charIndexRef.current / text.length));
+      };
+
       utterance.onend = () => {
+        setProgress(1);
         setIsSpeaking(false);
         setIsPaused(false);
         onEnd?.();
       };
 
-      utterance.onpause = () => {
-        setIsPaused(true);
-      };
-
-      utterance.onresume = () => {
-        setIsPaused(false);
-      };
+      utterance.onpause = () => setIsPaused(true);
+      utterance.onresume = () => setIsPaused(false);
 
       utterance.onerror = (event) => {
-        // 'interrupted' or 'canceled' are standard when user skips or stops
+        // "interrupted" / "canceled" are expected when seeking or stopping.
         if (event.error !== "interrupted" && event.error !== "canceled") {
           console.error("SpeechSynthesis error:", event.error);
           onError?.(event.error);
+          // Keep the lesson moving rather than stalling on a dead utterance.
+          onEnd?.();
         }
         setIsSpeaking(false);
         setIsPaused(false);
@@ -178,51 +293,59 @@ export function useSpeech({
 
       window.speechSynthesis.speak(utterance);
     },
-    [isMuted, isSupported, onEnd, onError, onStart, selectedVoice, speed, stop]
+    [isMuted, isSupported, onEnd, onError, onStart, runSilentPlayback, selectedVoice, speechLang, speed, stop, voiceStyle]
   );
 
   const pause = useCallback(() => {
-    if (isMuted && muteTimerRef.current) {
-      clearTimeout(muteTimerRef.current);
-      muteTimerRef.current = null;
+    if (isMuted || !isSupported) {
+      clearTimers();
       setIsPaused(true);
       return;
     }
 
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      if (window.speechSynthesis.speaking) {
-        window.speechSynthesis.pause();
-        setIsPaused(true);
-      }
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.pause();
+      setIsPaused(true);
     }
-  }, [isMuted]);
+  }, [clearTimers, isMuted, isSupported]);
 
   const resume = useCallback(
     (currentText?: string) => {
-      if (isMuted && currentText) {
-        speak(currentText);
+      if ((isMuted || !isSupported) && currentText) {
+        runSilentPlayback(currentText);
         return;
       }
 
-      if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        if (window.speechSynthesis.paused) {
-          window.speechSynthesis.resume();
-          setIsPaused(false);
-        } else if (currentText && !window.speechSynthesis.speaking) {
-          speak(currentText);
-        }
+      if (window.speechSynthesis.paused && window.speechSynthesis.speaking) {
+        window.speechSynthesis.resume();
+        setIsPaused(false);
+        return;
       }
+
+      // Chrome on Windows frequently drops a paused utterance instead of
+      // holding it. Restart from the last word boundary we heard, so resuming
+      // continues where the tutor stopped rather than from the top.
+      const text = currentText || currentTextRef.current;
+      if (!text) return;
+
+      const offset = Math.min(charIndexRef.current, Math.max(0, text.length - 1));
+      const resumeAt = text.lastIndexOf(" ", offset) + 1;
+      speak(text, { fromCharIndex: resumeAt > 0 ? resumeAt : 0 });
     },
-    [isMuted, speak]
+    [isMuted, isSupported, runSilentPlayback, speak]
   );
 
   return {
     isSupported,
     isSpeaking,
     isPaused,
+    progress,
     availableVoices,
     selectedVoice,
-    setSelectedVoice,
+    setSelectedVoice: pickVoice,
+    previewVoice,
+    voiceStyle,
+    setVoiceStyle,
     speak,
     pause,
     resume,
