@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Sparkles, Volume2, Mic, Pause, Play, CheckCircle2, Award } from "lucide-react";
+import React, { useState } from "react";
+import { Sparkles, Volume2, Radio, CheckCircle2, Mic } from "lucide-react";
 import { PlaybackStatus } from "@/types/lesson";
 
 interface AITeacherAvatarProps {
@@ -20,31 +20,16 @@ export const AITeacherAvatar: React.FC<AITeacherAvatarProps> = ({
   isFloating = false,
 }) => {
   const isSpeaking = status === "playing";
-  const [mouthOpen, setMouthOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-
-  // Dynamic speaking mouth oscillation when audio is playing
-  useEffect(() => {
-    if (!isSpeaking) {
-      setMouthOpen(false);
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setMouthOpen((prev) => !prev);
-    }, 180);
-
-    return () => clearInterval(interval);
-  }, [isSpeaking]);
 
   if (isFloating && isMinimized) {
     return (
       <button
         onClick={() => setIsMinimized(false)}
-        className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-white/95 border border-[#e2e5eb] shadow-lg text-xs font-semibold text-[#0d0e11] hover:border-electric transition-all backdrop-blur-md"
+        className="flex items-center space-x-2.5 px-3.5 py-2 rounded-full bg-white/95 border border-[#e4dfd3] shadow-lg text-xs font-medium text-[#121316] hover:border-[#1677ff] transition-all backdrop-blur-xl"
       >
-        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-        <span>AI Teacher (Click to Expand)</span>
+        <span className="w-2.5 h-2.5 rounded-full bg-[#1677ff] animate-pulse" />
+        <span className="font-mono text-[11px] font-semibold">Tutor AI (Expand)</span>
       </button>
     );
   }
@@ -53,39 +38,42 @@ export const AITeacherAvatar: React.FC<AITeacherAvatarProps> = ({
     <div
       className={`relative flex flex-col rounded-2xl border transition-all duration-300 ${
         isFloating
-          ? "bg-white/95 backdrop-blur-xl border-[#d8dce6] shadow-[0_16px_40px_rgba(0,0,0,0.12)] p-3.5 max-w-sm"
-          : "bg-white border-[#e2e5eb] shadow-xs p-4"
+          ? "bg-white/95 backdrop-blur-2xl border-[#e4dfd3] shadow-[0_20px_50px_rgba(0,0,0,0.08)] p-3.5 max-w-sm"
+          : "bg-white border-[#e6e2d8] shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-4"
       }`}
     >
-      {/* Header Badge */}
-      <div className="flex items-center justify-between pb-3 border-b border-neutral-100 mb-3">
-        <div className="flex items-center space-x-2">
-          <div className="relative">
+      {/* Top Identity Row */}
+      <div className="flex items-center justify-between pb-3 border-b border-[#f0ede6] mb-3">
+        <div className="flex items-center space-x-2.5">
+          <div className="relative flex items-center justify-center">
             <span
               className={`block w-2.5 h-2.5 rounded-full ${
                 isSpeaking
-                  ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+                  ? "bg-[#1677ff] shadow-[0_0_10px_rgba(22,119,255,0.8)]"
                   : status === "paused"
-                  ? "bg-amber-400"
+                  ? "bg-amber-500"
                   : "bg-neutral-400"
               }`}
             />
             {isSpeaking && (
-              <span className="absolute -inset-1 rounded-full bg-emerald-400 opacity-40 animate-ping" />
+              <span className="absolute -inset-1 rounded-full bg-[#1677ff]/40 animate-ping" />
             )}
           </div>
+
           <div>
-            <h4 className="text-xs font-bold text-[#0d0e11] flex items-center gap-1.5">
-              <span>{teacherName}</span>
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-blue-50 text-electric border border-blue-200">
+            <div className="flex items-center space-x-1.5">
+              <h4 className="text-xs font-semibold text-[#121316] tracking-tight font-sans">
+                {teacherName}
+              </h4>
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[#1677ff]/10 text-[#1677ff] border border-[#1677ff]/20">
                 AI FELLOW
               </span>
-            </h4>
+            </div>
             <p className="text-[10px] text-neutral-500 font-medium">
               {isSpeaking
-                ? "Explaining on Smartboard"
+                ? "Live Synchronized Lecture"
                 : status === "paused"
-                ? "Lesson Paused"
+                ? "Narration Paused"
                 : "Ready to Teach"}
             </p>
           </div>
@@ -94,153 +82,79 @@ export const AITeacherAvatar: React.FC<AITeacherAvatarProps> = ({
         {isFloating && (
           <button
             onClick={() => setIsMinimized(true)}
-            className="text-neutral-400 hover:text-neutral-700 text-xs px-1.5 py-0.5 rounded hover:bg-neutral-100"
-            title="Minimize Teacher"
+            className="text-neutral-400 hover:text-neutral-700 text-xs px-2 py-0.5 rounded-md hover:bg-neutral-100 transition-colors"
+            title="Minimize"
           >
             ✕
           </button>
         )}
       </div>
 
-      {/* Main Teacher Visual Representation */}
+      {/* Main Visualizer & Live Transcript */}
       <div className="flex items-start space-x-3.5">
-        {/* Animated Teacher Avatar SVG Character */}
-        <div className="relative flex-shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-b from-blue-50 to-indigo-100 border border-blue-200/80 p-1 flex items-center justify-center overflow-hidden shadow-xs">
-          <svg viewBox="0 0 100 100" className="w-full h-full">
-            {/* Soft Ambient Background Glow */}
-            <circle cx="50" cy="50" r="46" fill="#f0f7ff" />
+        {/* Apple/Hume Style Ethereal Voice Harmonic Orb */}
+        <div className="relative flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0f2b5c] via-[#1677ff] to-[#00d2ff] p-0.5 flex items-center justify-center overflow-hidden shadow-sm group">
+          {/* Internal undulating glow layers */}
+          <div
+            className={`absolute inset-0 rounded-2xl bg-gradient-to-tr from-[#1677ff] via-[#4338ca] to-[#06b6d4] opacity-90 transition-transform duration-700 ${
+              isSpeaking ? "animate-pulse scale-105" : "scale-100"
+            }`}
+          />
+          {/* Ambient harmonic rings */}
+          <div
+            className={`absolute inset-1 rounded-xl border border-white/30 ${
+              isSpeaking ? "animate-spin [animation-duration:8s]" : ""
+            }`}
+          />
 
-            {/* Hair Back */}
-            <path
-              d="M 28 50 C 24 30, 76 30, 72 50 C 72 65, 28 65, 28 50 Z"
-              fill="#1e293b"
-            />
-
-            {/* Teacher Torso / Blazer */}
-            <path
-              d="M 20 95 C 20 72, 35 68, 50 68 C 65 68, 80 72, 80 95 Z"
-              fill="#1e3a8a"
-            />
-            {/* White Collar Shirt */}
-            <polygon points="50,68 40,78 60,78" fill="#ffffff" />
-            <polygon points="50,78 45,95 55,95" fill="#1677ff" />
-
-            {/* Head / Face */}
-            <ellipse cx="50" cy="46" rx="20" ry="22" fill="#ffdfba" />
-
-            {/* Hair Front / Bangs */}
-            <path
-              d="M 30 42 C 32 28, 68 28, 70 42 C 60 35, 40 35, 30 42 Z"
-              fill="#0f172a"
-            />
-
-            {/* Stylish Teacher Glasses */}
-            <rect
-              x="33"
-              y="40"
-              width="14"
-              height="10"
-              rx="3"
-              fill="rgba(255,255,255,0.4)"
-              stroke="#0f172a"
-              strokeWidth="2"
-            />
-            <rect
-              x="53"
-              y="40"
-              width="14"
-              height="10"
-              rx="3"
-              fill="rgba(255,255,255,0.4)"
-              stroke="#0f172a"
-              strokeWidth="2"
-            />
-            <line x1="47" y1="45" x2="53" y2="45" stroke="#0f172a" strokeWidth="2" />
-
-            {/* Friendly Intelligent Eyes */}
-            <circle cx="40" cy="45" r="2.5" fill="#1e293b" />
-            <circle cx="60" cy="45" r="2.5" fill="#1e293b" />
-            <circle cx="41" cy="44" r="0.8" fill="#ffffff" />
-            <circle cx="61" cy="44" r="0.8" fill="#ffffff" />
-
-            {/* Gentle Smile / Speaking Mouth */}
-            {mouthOpen ? (
-              <ellipse cx="50" cy="58" rx="4" ry="3" fill="#be123c" />
+          {/* Central Acoustic Icon */}
+          <div className="relative z-10 flex items-center justify-center text-white">
+            {isSpeaking ? (
+              <Radio className="w-5 h-5 animate-pulse text-white drop-shadow-md" />
             ) : (
-              <path
-                d="M 45 57 Q 50 61 55 57"
-                stroke="#991b1b"
-                strokeWidth="1.8"
-                fill="none"
-                strokeLinecap="round"
-              />
+              <Volume2 className="w-5 h-5 text-white/90" />
             )}
-
-            {/* Teacher's Smart Pointer Pen in Hand */}
-            {isSpeaking && (
-              <g className="animate-pulse">
-                <line
-                  x1="76"
-                  y1="75"
-                  x2="94"
-                  y2="35"
-                  stroke="#1677ff"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                />
-                <circle cx="94" cy="35" r="3" fill="#00e5ff" />
-              </g>
-            )}
-          </svg>
-
-          {/* Small speaking badge */}
-          {isSpeaking && (
-            <div className="absolute -bottom-1 -right-1 bg-electric text-white p-0.5 rounded-full shadow-xs">
-              <Volume2 className="w-3 h-3" />
-            </div>
-          )}
+          </div>
         </div>
 
-        {/* Dynamic Teacher Dialogue Bubble */}
+        {/* Dynamic Spoken Dialogue Stream */}
         <div className="flex-1 min-w-0">
-          <div className="relative p-2.5 rounded-xl bg-neutral-50 border border-neutral-200/80 text-[11px] text-neutral-800 leading-relaxed font-sans shadow-xs">
-            {/* Bubble arrow pointer */}
-            <div className="absolute top-3 -left-1.5 w-3 h-3 bg-neutral-50 border-l border-t border-neutral-200/80 rotate-[-45deg]" />
-
+          <div className="p-2.5 rounded-xl bg-[#faf8f5] border border-[#e8e4db] text-xs text-neutral-800 leading-relaxed font-sans shadow-2xs">
             {isSpeaking ? (
               <div>
-                <span className="font-semibold text-electric block mb-0.5 text-[10px] uppercase tracking-wider">
-                  Current Demonstration:
+                <span className="font-mono text-[9px] font-bold text-[#1677ff] uppercase tracking-wider block mb-0.5">
+                  Spoken Script:
                 </span>
-                <p className="line-clamp-3 text-neutral-700 italic font-serif">
-                  “{narration || "Follow the smartboard diagrams carefully as we unpack this concept."}”
+                <p className="line-clamp-3 text-[#121316] font-serif italic text-[11px] leading-snug">
+                  “{narration || "Follow the whiteboard diagrams as we explore this core concept."}”
                 </p>
               </div>
             ) : status === "paused" ? (
-              <p className="text-neutral-600">
-                “We have paused here. Click <strong className="text-electric">Resume</strong> or press <kbd className="px-1 py-0.5 rounded bg-white border border-neutral-300 font-mono text-[9px]">Space</kbd> whenever you are ready.”
+              <p className="text-neutral-600 text-[11px]">
+                “Lecture paused. Press <kbd className="px-1 py-0.5 rounded bg-white border border-neutral-300 font-mono text-[9px]">Space</kbd> or click <strong>Play</strong> to continue.”
               </p>
             ) : (
-              <p className="text-neutral-600">
-                “Hello! I will guide you through this lesson with live whiteboard visuals and voice explanation. Click <strong className="text-electric">Play Masterclass</strong> to start!”
+              <p className="text-neutral-600 text-[11px]">
+                “Welcome! Press <strong>Play Masterclass</strong> to begin interactive visual teaching.”
               </p>
             )}
           </div>
 
-          {/* Teacher Status Bar */}
-          <div className="flex items-center justify-between mt-2 px-1">
-            <div className="flex items-center space-x-1.5 text-[10px] text-neutral-500 font-mono">
-              <Sparkles className="w-3 h-3 text-electric" />
-              <span className="truncate max-w-[170px]">
-                {currentSegmentHeading || "Interactive Smartboard"}
+          {/* Real-time frequency equalizer animation */}
+          <div className="flex items-center justify-between mt-2 px-0.5">
+            <div className="flex items-center space-x-1 text-[10px] text-neutral-500 font-mono">
+              <Sparkles className="w-3 h-3 text-[#1677ff]" />
+              <span className="truncate max-w-[160px]">
+                {currentSegmentHeading || "Smartboard"}
               </span>
             </div>
 
             {isSpeaking && (
               <div className="flex items-center space-x-0.5">
-                <span className="w-1 h-2.5 bg-electric rounded-full animate-bounce [animation-delay:0ms]" />
-                <span className="w-1 h-3.5 bg-electric rounded-full animate-bounce [animation-delay:150ms]" />
-                <span className="w-1 h-2 bg-electric rounded-full animate-bounce [animation-delay:300ms]" />
+                <span className="w-0.5 h-2.5 bg-[#1677ff] rounded-full animate-bounce [animation-delay:0ms]" />
+                <span className="w-0.5 h-4 bg-[#1677ff] rounded-full animate-bounce [animation-delay:150ms]" />
+                <span className="w-0.5 h-2 bg-[#1677ff] rounded-full animate-bounce [animation-delay:300ms]" />
+                <span className="w-0.5 h-3.5 bg-[#1677ff] rounded-full animate-bounce [animation-delay:450ms]" />
               </div>
             )}
           </div>

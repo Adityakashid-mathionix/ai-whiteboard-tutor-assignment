@@ -206,212 +206,37 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative flex flex-col w-full h-full bg-white rounded-2xl border border-[#e2e5eb] shadow-[0_12px_40px_rgba(0,0,0,0.06)] overflow-hidden transition-all duration-300 ${
+      className={`relative flex flex-col w-full h-full bg-white rounded-2xl border border-[#e4dfd3] shadow-[0_12px_40px_rgba(0,0,0,0.04)] overflow-hidden transition-all duration-300 ${
         isFullscreen ? "p-4" : ""
       }`}
     >
-      {/* Smartboard Hardware Header Bar */}
-      <div className="flex flex-wrap items-center justify-between px-4 py-2.5 bg-white border-b border-[#e5e7eb] z-20 gap-2 shadow-xs">
-        {/* Left: Hardware Model & Chapter Tag */}
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-electric shadow-[0_0_8px_rgba(22,119,255,0.7)]" />
-            <span className="text-[11px] font-mono tracking-widest text-neutral-800 font-bold uppercase">
-              SMARTBOARD
-            </span>
-          </div>
-
-          <div className="h-3.5 w-px bg-neutral-200" />
+      {/* Refined Minimalist Smartboard Header */}
+      <div className="flex items-center justify-between px-5 py-2.5 bg-white border-b border-[#ece8df] z-20">
+        <div className="flex items-center space-x-2.5">
+          <span className="w-2 h-2 rounded-full bg-[#1677ff] shadow-[0_0_8px_rgba(22,119,255,0.7)]" />
+          <span className="text-[11px] font-mono tracking-widest text-[#121316] font-bold uppercase">
+            Smartboard
+          </span>
 
           {currentSegmentHeading && (
-            <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-electric/10 border border-electric/25 text-xs text-electric font-serif italic max-w-sm truncate shadow-xs">
-              <Sparkles className="w-3.5 h-3.5 text-electric flex-shrink-0" />
-              <span className="truncate">{currentSegmentHeading}</span>
-            </div>
+            <>
+              <span className="text-neutral-300">•</span>
+              <span className="text-xs font-serif italic text-neutral-700 truncate max-w-md font-medium">
+                {currentSegmentHeading}
+              </span>
+            </>
           )}
         </div>
 
-        {/* Center: Stylus & Student Tools Bar */}
-        <div className="flex items-center space-x-1 bg-neutral-100 p-1 rounded-xl border border-neutral-200">
-          {/* Pointer Tool */}
-          <button
-            onClick={() => setActiveTool("pointer")}
-            title="Inspect / Pointer Tool"
-            className={`p-1.5 rounded-lg text-xs transition-all duration-200 ${
-              activeTool === "pointer"
-                ? "bg-electric text-white shadow-sm scale-105"
-                : "text-neutral-600 hover:text-[#0d0e11] hover:bg-white"
-            }`}
-          >
-            <MousePointer2 className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Pan Tool */}
-          <button
-            onClick={() => setActiveTool("pan")}
-            title="Pan Canvas Mode"
-            className={`p-1.5 rounded-lg text-xs transition-all duration-200 ${
-              activeTool === "pan"
-                ? "bg-electric text-white shadow-sm scale-105"
-                : "text-neutral-600 hover:text-[#0d0e11] hover:bg-white"
-            }`}
-          >
-            <Move className="w-3.5 h-3.5" />
-          </button>
-
-          <div className="h-3 w-px bg-neutral-300 mx-0.5" />
-
-          {/* Student Pen */}
-          <button
-            onClick={() => setActiveTool("pen")}
-            title="Student Notes Pen"
-            className={`p-1.5 rounded-lg text-xs transition-all duration-200 ${
-              activeTool === "pen"
-                ? "bg-electric text-white shadow-sm scale-105"
-                : "text-neutral-600 hover:text-[#0d0e11] hover:bg-white"
-            }`}
-          >
-            <PenTool className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Pen Color Selector */}
-          {activeTool === "pen" && (
-            <div className="flex items-center space-x-1 px-1">
-              {[
-                { color: "#1677ff", title: "Electric Blue" },
-                { color: "#0d0e11", title: "Carbon Black" },
-                { color: "#e62e4d", title: "Crimson" },
-                { color: "#00b875", title: "Emerald" },
-              ].map((c) => (
-                <button
-                  key={c.color}
-                  onClick={() => setPenColor(c.color)}
-                  title={c.title}
-                  className={`w-3.5 h-3.5 rounded-full transition-transform ${
-                    penColor === c.color ? "scale-125 ring-2 ring-white shadow-sm" : "opacity-75 hover:opacity-100"
-                  }`}
-                  style={{ backgroundColor: c.color }}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Student Highlighter */}
-          <button
-            onClick={() => setActiveTool("highlighter")}
-            title="Highlighter Marker"
-            className={`p-1.5 rounded-lg text-xs transition-all duration-200 ${
-              activeTool === "highlighter"
-                ? "bg-amber-400 text-slate-900 shadow-sm scale-105"
-                : "text-neutral-600 hover:text-[#0d0e11] hover:bg-white"
-            }`}
-          >
-            <Highlighter className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Eraser */}
-          <button
-            onClick={() => setActiveTool("eraser")}
-            title="Erase Student Drawings"
-            className={`p-1.5 rounded-lg text-xs transition-all duration-200 ${
-              activeTool === "eraser"
-                ? "bg-rose-500 text-white shadow-sm scale-105"
-                : "text-neutral-600 hover:text-[#0d0e11] hover:bg-white"
-            }`}
-          >
-            <Eraser className="w-3.5 h-3.5" />
-          </button>
-
-          {studentStrokes.length > 0 && (
-            <>
-              <button
-                onClick={handleUndo}
-                title="Undo stroke"
-                className="p-1.5 rounded-lg text-neutral-600 hover:text-[#0d0e11] hover:bg-white transition-colors"
-              >
-                <Undo2 className="w-3 h-3" />
-              </button>
-              <button
-                onClick={handleClearStudentDrawings}
-                title="Clear my annotations"
-                className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-white transition-colors"
-              >
-                <Trash2 className="w-3 h-3" />
-              </button>
-            </>
-          )}
-
-          <div className="h-3 w-px bg-neutral-300 mx-0.5" />
-
-          {/* Grid Matrix */}
-          <button
-            onClick={onToggleGrid}
-            title={showGrid ? "Hide Grid Matrix" : "Show Grid Matrix"}
-            className={`p-1.5 rounded-lg text-xs transition-all duration-200 ${
-              showGrid ? "bg-white text-electric shadow-xs font-semibold" : "text-neutral-600 hover:text-[#0d0e11]"
-            }`}
-          >
-            <Grid className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Canvas Blueprint/Studio Mode Toggle */}
-          <button
-            onClick={() => setCanvasTheme((t) => (t === "porcelain" ? "blueprint" : "porcelain"))}
-            title={canvasTheme === "blueprint" ? "Switch to Porcelain Studio (Light)" : "Switch to Midnight Blueprint (Dark)"}
-            className={`p-1.5 rounded-lg text-xs transition-all duration-200 ${
-              canvasTheme === "blueprint"
-                ? "bg-[#0f172a] text-[#38bdf8] shadow-xs font-semibold"
-                : "text-neutral-600 hover:text-[#0d0e11]"
-            }`}
-          >
-            {canvasTheme === "blueprint" ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
-          </button>
-
-          <div className="h-3 w-px bg-neutral-300 mx-0.5" />
-
-          {/* Zoom controls */}
-          <button
-            onClick={onZoomOut}
-            title="Zoom Out"
-            disabled={zoom <= 0.75}
-            className="p-1.5 rounded-lg text-neutral-600 hover:text-[#0d0e11] disabled:opacity-30"
-          >
-            <ZoomOut className="w-3.5 h-3.5" />
-          </button>
-          <span className="text-[11px] font-mono text-neutral-700 w-9 text-center font-bold">
-            {Math.round(zoom * 100)}%
-          </span>
-          <button
-            onClick={onZoomIn}
-            title="Zoom In"
-            disabled={zoom >= 1.5}
-            className="p-1.5 rounded-lg text-neutral-600 hover:text-[#0d0e11] disabled:opacity-30"
-          >
-            <ZoomIn className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={handleResetAll}
-            title="Reset Zoom & Pan"
-            className="p-1.5 rounded-lg text-neutral-600 hover:text-[#0d0e11]"
-          >
-            <RotateCcw className="w-3 h-3" />
-          </button>
-
-          <div className="h-3 w-px bg-neutral-300 mx-0.5" />
-
-          {/* Fullscreen */}
-          <button
-            onClick={toggleFullscreen}
-            title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-            className="p-1.5 rounded-lg text-neutral-600 hover:text-[#0d0e11]"
-          >
-            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-          </button>
+        <div className="flex items-center space-x-2 text-[10px] font-mono text-neutral-400">
+          <span className="capitalize text-neutral-600 font-semibold">{status}</span>
+          <span>•</span>
+          <span>1000×600 VECTOR</span>
         </div>
       </div>
 
       {/* Main Whiteboard Canvas Surface */}
-      <div className="relative flex-1 w-full h-full min-h-[460px] lg:min-h-[540px] flex items-center justify-center overflow-hidden p-4 select-none bg-[#f1f3f7]">
+      <div className="relative flex-1 w-full h-full min-h-[460px] lg:min-h-[540px] flex items-center justify-center overflow-hidden p-3 select-none bg-[#faf8f5]">
         {/* The Porcelain White or Midnight Blueprint Smartboard Chassis */}
         <div
           className={`w-full h-full max-w-[1000px] max-h-[600px] rounded-xl overflow-hidden border transition-all duration-300 ease-out cursor-${
@@ -420,8 +245,8 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
             canvasTheme === "blueprint"
               ? "blueprint-grid border-[#1e293b] shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
               : showGrid
-              ? "smartboard-porcelain border-[#d8dce6]"
-              : "bg-white border-[#d8dce6] shadow-[0_10px_35px_rgba(0,0,0,0.06)]"
+              ? "smartboard-porcelain border-[#e2ddd3]"
+              : "bg-white border-[#e2ddd3] shadow-[0_10px_35px_rgba(0,0,0,0.05)]"
           }`}
           style={{
             transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
@@ -581,6 +406,149 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
             teacherName="Dr. Maya Chen"
             isFloating={true}
           />
+        </div>
+
+        {/* Bespoke Floating Glass Smartboard Tool Dock */}
+        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-30 hidden sm:flex items-center space-x-1 px-3 py-1.5 rounded-full bg-white/95 border border-[#e4dfd3] shadow-[0_12px_36px_rgba(0,0,0,0.08)] backdrop-blur-xl">
+          {/* Tool selectors */}
+          <button
+            onClick={() => setActiveTool("pointer")}
+            title="Inspect Element"
+            className={`p-1.5 rounded-full text-xs transition-all ${
+              activeTool === "pointer"
+                ? "bg-[#1677ff] text-white shadow-xs"
+                : "text-neutral-500 hover:text-[#121316] hover:bg-neutral-100"
+            }`}
+          >
+            <MousePointer2 className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={() => setActiveTool("pan")}
+            title="Pan Canvas"
+            className={`p-1.5 rounded-full text-xs transition-all ${
+              activeTool === "pan"
+                ? "bg-[#1677ff] text-white shadow-xs"
+                : "text-neutral-500 hover:text-[#121316] hover:bg-neutral-100"
+            }`}
+          >
+            <Move className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={() => setActiveTool("pen")}
+            title="Student Notes Pen"
+            className={`p-1.5 rounded-full text-xs transition-all ${
+              activeTool === "pen"
+                ? "bg-[#1677ff] text-white shadow-xs"
+                : "text-neutral-500 hover:text-[#121316] hover:bg-neutral-100"
+            }`}
+          >
+            <PenTool className="w-3.5 h-3.5" />
+          </button>
+
+          {activeTool === "pen" && (
+            <div className="flex items-center space-x-1 px-1">
+              {[
+                { color: "#1677ff", title: "Blue" },
+                { color: "#121316", title: "Carbon" },
+                { color: "#dc2626", title: "Crimson" },
+                { color: "#059669", title: "Emerald" },
+              ].map((c) => (
+                <button
+                  key={c.color}
+                  onClick={() => setPenColor(c.color)}
+                  className={`w-3 h-3 rounded-full transition-transform ${
+                    penColor === c.color ? "scale-125 ring-2 ring-blue-500" : "opacity-70 hover:opacity-100"
+                  }`}
+                  style={{ backgroundColor: c.color }}
+                />
+              ))}
+            </div>
+          )}
+
+          <button
+            onClick={() => setActiveTool("eraser")}
+            title="Eraser"
+            className={`p-1.5 rounded-full text-xs transition-all ${
+              activeTool === "eraser"
+                ? "bg-rose-500 text-white shadow-xs"
+                : "text-neutral-500 hover:text-[#121316] hover:bg-neutral-100"
+            }`}
+          >
+            <Eraser className="w-3.5 h-3.5" />
+          </button>
+
+          {studentStrokes.length > 0 && (
+            <button
+              onClick={handleClearStudentDrawings}
+              title="Clear drawings"
+              className="p-1.5 rounded-full text-rose-500 hover:text-rose-700 hover:bg-rose-50"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          )}
+
+          <div className="h-3 w-px bg-neutral-200 mx-1" />
+
+          {/* Canvas Blueprint/Studio Mode Toggle */}
+          <button
+            onClick={() => setCanvasTheme((t) => (t === "porcelain" ? "blueprint" : "porcelain"))}
+            title={canvasTheme === "blueprint" ? "Switch to Porcelain Studio" : "Switch to Midnight Blueprint"}
+            className="p-1.5 rounded-full text-neutral-600 hover:text-[#121316] hover:bg-neutral-100"
+          >
+            {canvasTheme === "blueprint" ? <Moon className="w-3.5 h-3.5 text-[#38bdf8]" /> : <Sun className="w-3.5 h-3.5" />}
+          </button>
+
+          {/* Grid Toggle */}
+          <button
+            onClick={onToggleGrid}
+            title={showGrid ? "Hide Grid" : "Show Grid"}
+            className={`p-1.5 rounded-full ${
+              showGrid ? "text-[#1677ff] bg-blue-50/60" : "text-neutral-400 hover:text-[#121316]"
+            }`}
+          >
+            <Grid className="w-3.5 h-3.5" />
+          </button>
+
+          <div className="h-3 w-px bg-neutral-200 mx-1" />
+
+          {/* Zoom controls */}
+          <button
+            onClick={onZoomOut}
+            disabled={zoom <= 0.75}
+            className="p-1 rounded-full text-neutral-500 hover:text-[#121316] disabled:opacity-30"
+          >
+            <ZoomOut className="w-3 h-3" />
+          </button>
+          <span className="text-[10px] font-mono text-neutral-700 w-7 text-center font-bold">
+            {Math.round(zoom * 100)}%
+          </span>
+          <button
+            onClick={onZoomIn}
+            disabled={zoom >= 1.5}
+            className="p-1 rounded-full text-neutral-500 hover:text-[#121316] disabled:opacity-30"
+          >
+            <ZoomIn className="w-3 h-3" />
+          </button>
+          <button
+            onClick={handleResetAll}
+            title="Reset Zoom"
+            className="p-1 rounded-full text-neutral-400 hover:text-[#121316]"
+          >
+            <RotateCcw className="w-3 h-3" />
+          </button>
+
+          <div className="h-3 w-px bg-neutral-200 mx-1" />
+
+          {/* Fullscreen */}
+          <button
+            onClick={toggleFullscreen}
+            title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+            className="p-1.5 rounded-full text-neutral-500 hover:text-[#121316] hover:bg-neutral-100"
+          >
+            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+          </button>
         </div>
 
         {/* Resolution Badge Bottom Right */}

@@ -29,6 +29,7 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
   const [apiKey, setApiKey] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("nvidia/nemotron-3.5-lightning-30b-a3b");
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [isFocusMode, setIsFocusMode] = useState<boolean>(false);
   const [mobileTab, setMobileTab] = useState<"whiteboard" | "outline" | "tutor">("whiteboard");
 
   useEffect(() => {
@@ -144,10 +145,26 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
 
         {/* Studio Actions */}
         <div className="flex items-center space-x-2">
+          {/* Cinema / Focus View Toggle */}
+          <button
+            onClick={() => setIsFocusMode(!isFocusMode)}
+            title={isFocusMode ? "Exit Cinema View" : "Cinema View (Expands Whiteboard)"}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-mono transition-all border shadow-xs active:scale-95 ${
+              isFocusMode
+                ? "bg-[#1677ff] text-white border-[#1677ff] shadow-sm font-semibold"
+                : "bg-white text-neutral-700 hover:text-[#121316] border-neutral-200 hover:bg-neutral-50"
+            }`}
+          >
+            <Maximize2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline font-medium">
+              {isFocusMode ? "Standard View" : "Cinema View"}
+            </span>
+          </button>
+
           {/* Keyboard shortcut hint */}
           <div className="hidden lg:flex items-center space-x-1 text-[11px] font-mono text-neutral-500 bg-neutral-100 px-3 py-1 rounded-full border border-neutral-200">
             <Command className="w-3 h-3 text-neutral-400" />
-            <span>Space: Play/Pause</span>
+            <span>Space: Play</span>
           </div>
 
           <button
@@ -197,25 +214,31 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
         </button>
       </div>
 
-      {/* 3-Column Responsive Teaching Studio Layout */}
+      {/* Responsive Teaching Studio Layout with Cinema Mode */}
       <main className="flex-1 p-3 sm:p-4 lg:p-5 grid grid-cols-1 lg:grid-cols-12 gap-4 max-w-[1780px] mx-auto w-full">
-        {/* LEFT COLUMN: Lesson Outline (3 cols on desktop) */}
-        <section
-          className={`lg:col-span-3 h-[520px] lg:h-[calc(100vh-130px)] ${
-            mobileTab === "outline" ? "block" : "hidden lg:block"
-          }`}
-        >
-          <LessonOutline
-            lesson={initialLesson}
-            currentSegmentIndex={player.currentSegmentIndex}
-            status={player.status}
-            onSelectSegment={(idx) => player.seekToSegment(idx)}
-          />
-        </section>
+        {/* LEFT COLUMN: Lesson Outline (Hidden in Cinema Mode) */}
+        {!isFocusMode && (
+          <section
+            className={`lg:col-span-3 h-[520px] lg:h-[calc(100vh-130px)] ${
+              mobileTab === "outline" ? "block" : "hidden lg:block"
+            }`}
+          >
+            <LessonOutline
+              lesson={initialLesson}
+              currentSegmentIndex={player.currentSegmentIndex}
+              status={player.status}
+              onSelectSegment={(idx) => player.seekToSegment(idx)}
+            />
+          </section>
+        )}
 
-        {/* CENTER COLUMN: Whiteboard & Playback Controls (6 cols on desktop) */}
+        {/* CENTER COLUMN: Whiteboard & Playback Controls (Expands in Cinema Mode) */}
         <section
-          className={`lg:col-span-6 flex flex-col space-y-3.5 h-[calc(100vh-130px)] min-h-[540px] ${
+          className={`${
+            isFocusMode
+              ? "lg:col-span-12 max-w-6xl mx-auto w-full"
+              : "lg:col-span-6"
+          } flex flex-col space-y-3.5 h-[calc(100vh-130px)] min-h-[540px] transition-all duration-300 ${
             mobileTab === "whiteboard" ? "flex" : "hidden lg:flex"
           }`}
         >
@@ -259,21 +282,23 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
           />
         </section>
 
-        {/* RIGHT COLUMN: AI Tutor Panel & Q&A (3 cols on desktop) */}
-        <section
-          className={`lg:col-span-3 h-[520px] lg:h-[calc(100vh-130px)] ${
-            mobileTab === "tutor" ? "block" : "hidden lg:block"
-          }`}
-        >
-          <TutorPanel
-            lesson={initialLesson}
-            currentSegment={player.currentSegment}
-            currentSegmentIndex={player.currentSegmentIndex}
-            status={player.status}
-            apiKey={apiKey}
-            model={selectedModel}
-          />
-        </section>
+        {/* RIGHT COLUMN: AI Tutor Panel & Q&A (Hidden in Cinema Mode) */}
+        {!isFocusMode && (
+          <section
+            className={`lg:col-span-3 h-[520px] lg:h-[calc(100vh-130px)] ${
+              mobileTab === "tutor" ? "block" : "hidden lg:block"
+            }`}
+          >
+            <TutorPanel
+              lesson={initialLesson}
+              currentSegment={player.currentSegment}
+              currentSegmentIndex={player.currentSegmentIndex}
+              status={player.status}
+              apiKey={apiKey}
+              model={selectedModel}
+            />
+          </section>
+        )}
       </main>
 
       {/* Settings Modal */}
