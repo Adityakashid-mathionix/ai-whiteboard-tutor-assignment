@@ -31,7 +31,7 @@ export async function searchEducationalVisuals(
       const timeoutId = setTimeout(() => controller.abort(), 4000);
 
       const encodedQuery = encodeURIComponent(q);
-      const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodedQuery}&gsrlimit=${limit * 3}&prop=imageinfo&iiprop=url|size|extmetadata|mime&format=json&origin=*`;
+      const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodedQuery}&gsrlimit=${limit * 3}&prop=imageinfo&iiurlwidth=900&iiprop=url|size|extmetadata|mime&format=json&origin=*`;
 
       const res = await fetch(url, {
         headers: {

@@ -16,6 +16,12 @@ export interface EducationalVisualAsset {
   height: number;
   attribution: VisualAttribution;
   description?: string;
+  /**
+   * True only for hand-verified assets. Live Wikimedia search results are
+   * frequently off-topic for arbitrary subjects, so only curated images are
+   * allowed onto the board; everything else is taught with a drawn diagram.
+   */
+  curated?: boolean;
 }
 
 export function formatAttributionString(attribution?: VisualAttribution): string {
