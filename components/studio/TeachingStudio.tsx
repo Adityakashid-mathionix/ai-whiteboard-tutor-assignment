@@ -18,6 +18,7 @@ import {
   GraduationCap,
   Monitor,
   Command,
+  Maximize2,
 } from "lucide-react";
 
 interface TeachingStudioProps {
@@ -56,8 +57,8 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
   const onLessonComplete = () => {
     try {
       confetti({
-        particleCount: 80,
-        spread: 70,
+        particleCount: 100,
+        spread: 75,
         origin: { y: 0.6 },
         colors: ["#1677ff", "#00d2ff", "#00b875", "#ffaa00"],
       });
@@ -104,29 +105,29 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
   }, [player]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0c0d10] text-[#f6f4ef] selection:bg-[#1677ff]/30 selection:text-white editorial-desk-grid">
+    <div className="flex flex-col min-h-screen bg-[#f8f9fb] text-[#0d0e11] selection:bg-[#1677ff]/15 selection:text-[#1677ff] editorial-desk-grid">
       {/* Studio Top Navigation Bar */}
-      <header className="flex items-center justify-between px-4 sm:px-6 py-3 bg-[#121620]/95 border-b border-[#282d3b] backdrop-blur-md sticky top-0 z-40">
+      <header className="flex items-center justify-between px-4 sm:px-6 py-3 bg-white/95 border-b border-[#e5e7eb] backdrop-blur-md sticky top-0 z-40 shadow-xs">
         <div className="flex items-center space-x-3.5">
           <Link
             href="/"
-            className="flex items-center space-x-1.5 text-xs font-mono text-neutral-400 hover:text-[#f6f4ef] px-3 py-1.5 rounded-full hover:bg-[#181c28] border border-transparent hover:border-[#282d3b] transition-all"
+            className="flex items-center space-x-1.5 text-xs font-mono text-neutral-600 hover:text-[#0d0e11] px-3 py-1.5 rounded-full hover:bg-neutral-100 border border-neutral-200 transition-all duration-200 active:scale-95"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Back to Topics</span>
           </Link>
 
-          <div className="h-4 w-px bg-[#282d3b]" />
+          <div className="h-4 w-px bg-neutral-200" />
 
           <div className="flex items-center space-x-2.5">
-            <div className="grid h-7 w-7 place-items-center rounded-lg bg-white/5 font-mono text-xs font-semibold text-electric ring-1 ring-electric/30">
+            <div className="grid h-8 w-8 place-items-center rounded-xl bg-electric/10 font-mono text-xs font-bold text-electric ring-1 ring-electric/30 shadow-xs">
               BX
             </div>
             <div>
-              <span className="text-xs font-bold tracking-tight text-[#f6f4ef] block leading-none font-sans">
+              <span className="text-xs font-bold tracking-tight text-[#0d0e11] block leading-none font-sans">
                 Braynix Studio
               </span>
-              <span className="text-[10px] text-neutral-400 font-mono leading-none">
+              <span className="text-[10px] text-neutral-500 font-mono leading-none">
                 Interactive Smartboard
               </span>
             </div>
@@ -134,8 +135,9 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
         </div>
 
         {/* Current Topic Badge */}
-        <div className="hidden md:flex items-center space-x-2 px-3.5 py-1 rounded-full bg-[#141720] border border-[#282d3b] text-xs shadow-inner">
-          <span className="text-electric font-semibold font-serif italic truncate max-w-sm text-sm">
+        <div className="hidden md:flex items-center space-x-2 px-4 py-1.5 rounded-full bg-white border border-[#e2e5eb] text-xs shadow-xs">
+          <span className="w-2 h-2 rounded-full bg-electric animate-pulse" />
+          <span className="text-neutral-800 font-semibold font-serif italic truncate max-w-sm text-sm">
             {initialLesson.title}
           </span>
         </div>
@@ -143,29 +145,29 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
         {/* Studio Actions */}
         <div className="flex items-center space-x-2">
           {/* Keyboard shortcut hint */}
-          <div className="hidden lg:flex items-center space-x-1 text-[11px] font-mono text-neutral-400 bg-[#141720] px-2.5 py-1 rounded-full border border-[#282d3b]">
-            <Command className="w-3 h-3 text-neutral-500" />
+          <div className="hidden lg:flex items-center space-x-1 text-[11px] font-mono text-neutral-500 bg-neutral-100 px-3 py-1 rounded-full border border-neutral-200">
+            <Command className="w-3 h-3 text-neutral-400" />
             <span>Space: Play/Pause</span>
           </div>
 
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#141720] hover:bg-[#181c28] text-xs font-mono text-neutral-300 hover:text-white border border-[#282d3b] transition-all shadow-sm"
+            className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-neutral-50 text-xs font-mono text-neutral-700 hover:text-[#0d0e11] border border-neutral-200 transition-all shadow-xs active:scale-95"
           >
             <Settings className="w-3.5 h-3.5 text-electric" />
-            <span className="hidden sm:inline">Settings</span>
+            <span className="hidden sm:inline font-medium">Settings</span>
           </button>
         </div>
       </header>
 
-      {/* Mobile Tab Navigation */}
-      <div className="lg:hidden flex border-b border-[#282d3b] bg-[#121620] px-4 py-2 space-x-2">
+      {/* Mobile Tab Navigation Bar */}
+      <div className="lg:hidden flex border-b border-[#e5e7eb] bg-white px-3 py-2 space-x-2 shadow-xs sticky top-[57px] z-30">
         <button
           onClick={() => setMobileTab("whiteboard")}
-          className={`flex-1 py-1.5 rounded-lg text-xs font-mono flex items-center justify-center space-x-1.5 transition-colors ${
+          className={`flex-1 py-2 rounded-xl text-xs font-mono flex items-center justify-center space-x-1.5 transition-all duration-200 ${
             mobileTab === "whiteboard"
-              ? "bg-electric text-white"
-              : "text-neutral-400 hover:text-white"
+              ? "bg-electric text-white shadow-sm font-semibold"
+              : "text-neutral-600 hover:text-[#0d0e11] bg-neutral-50"
           }`}
         >
           <Monitor className="w-3.5 h-3.5" />
@@ -173,10 +175,10 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
         </button>
         <button
           onClick={() => setMobileTab("outline")}
-          className={`flex-1 py-1.5 rounded-lg text-xs font-mono flex items-center justify-center space-x-1.5 transition-colors ${
+          className={`flex-1 py-2 rounded-xl text-xs font-mono flex items-center justify-center space-x-1.5 transition-all duration-200 ${
             mobileTab === "outline"
-              ? "bg-electric text-white"
-              : "text-neutral-400 hover:text-white"
+              ? "bg-electric text-white shadow-sm font-semibold"
+              : "text-neutral-600 hover:text-[#0d0e11] bg-neutral-50"
           }`}
         >
           <Layers className="w-3.5 h-3.5" />
@@ -184,10 +186,10 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
         </button>
         <button
           onClick={() => setMobileTab("tutor")}
-          className={`flex-1 py-1.5 rounded-lg text-xs font-mono flex items-center justify-center space-x-1.5 transition-colors ${
+          className={`flex-1 py-2 rounded-xl text-xs font-mono flex items-center justify-center space-x-1.5 transition-all duration-200 ${
             mobileTab === "tutor"
-              ? "bg-electric text-white"
-              : "text-neutral-400 hover:text-white"
+              ? "bg-electric text-white shadow-sm font-semibold"
+              : "text-neutral-600 hover:text-[#0d0e11] bg-neutral-50"
           }`}
         >
           <GraduationCap className="w-3.5 h-3.5" />
@@ -195,7 +197,7 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
         </button>
       </div>
 
-      {/* 3-Column Teaching Studio Layout */}
+      {/* 3-Column Responsive Teaching Studio Layout */}
       <main className="flex-1 p-3 sm:p-4 lg:p-5 grid grid-cols-1 lg:grid-cols-12 gap-4 max-w-[1780px] mx-auto w-full">
         {/* LEFT COLUMN: Lesson Outline (3 cols on desktop) */}
         <section
@@ -213,7 +215,7 @@ export const TeachingStudio: React.FC<TeachingStudioProps> = ({ initialLesson })
 
         {/* CENTER COLUMN: Whiteboard & Playback Controls (6 cols on desktop) */}
         <section
-          className={`lg:col-span-6 flex flex-col space-y-3.5 h-[calc(100vh-130px)] min-h-[520px] ${
+          className={`lg:col-span-6 flex flex-col space-y-3.5 h-[calc(100vh-130px)] min-h-[540px] ${
             mobileTab === "whiteboard" ? "flex" : "hidden lg:flex"
           }`}
         >

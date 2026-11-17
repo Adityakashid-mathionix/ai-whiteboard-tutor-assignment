@@ -115,7 +115,7 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
               className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
                 msg.role === "user"
                   ? "bg-electric text-white"
-                  : "bg-electric/15 text-electric border border-electric/30"
+                  : "bg-electric/10 text-electric border border-electric/25"
               }`}
             >
               {msg.role === "user" ? (
@@ -128,14 +128,14 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
             <div
               className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 leading-relaxed font-sans ${
                 msg.role === "user"
-                  ? "bg-electric text-white rounded-tr-none font-medium"
-                  : "bg-[#141720] border border-[#282d3b] text-[#f6f4ef] rounded-tl-none whitespace-pre-line"
+                  ? "bg-electric text-white rounded-tr-none font-medium shadow-xs"
+                  : "bg-neutral-100 border border-neutral-200 text-[#0d0e11] rounded-tl-none whitespace-pre-line"
               }`}
             >
               {msg.content}
               <div
                 className={`text-[9px] font-mono mt-1 ${
-                  msg.role === "user" ? "text-blue-100" : "text-neutral-500"
+                  msg.role === "user" ? "text-blue-100" : "text-neutral-400"
                 }`}
               >
                 {msg.timestamp}
@@ -145,15 +145,15 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
         ))}
 
         {isLoading && (
-          <div className="flex items-center space-x-2 text-xs text-electric bg-electric/10 border border-electric/25 p-2.5 rounded-xl w-fit font-mono">
+          <div className="flex items-center space-x-2 text-xs text-electric bg-electric/10 border border-electric/20 p-2.5 rounded-xl w-fit font-mono">
             <Loader2 className="w-3.5 h-3.5 animate-spin text-electric" />
             <span>Dr. Maya is formulating a Socratic explanation...</span>
           </div>
         )}
 
         {error && (
-          <div className="flex items-start space-x-2 text-xs text-rose-300 bg-[#2b0d14] border border-[#521926] p-2.5 rounded-xl font-mono">
-            <AlertCircle className="w-4 h-4 text-[#ff3355] flex-shrink-0 mt-0.5" />
+          <div className="flex items-start space-x-2 text-xs text-rose-700 bg-rose-50 border border-rose-200 p-2.5 rounded-xl font-mono">
+            <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
             <span className="flex-1 font-sans">{error}</span>
           </div>
         )}
@@ -166,7 +166,7 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
             <button
               key={idx}
               onClick={() => handleSend(q)}
-              className="text-[11px] font-mono px-2.5 py-1 rounded-full bg-[#141720] hover:bg-[#181c28] text-neutral-300 border border-[#282d3b] transition-colors flex items-center space-x-1 text-left"
+              className="text-[11px] font-mono px-2.5 py-1 rounded-full bg-white hover:bg-neutral-50 text-neutral-700 border border-neutral-200 transition-colors flex items-center space-x-1 text-left shadow-xs active:scale-95"
             >
               <Sparkles className="w-2.5 h-2.5 text-electric" />
               <span className="truncate max-w-[210px]">{q}</span>
@@ -181,7 +181,7 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
           e.preventDefault();
           handleSend();
         }}
-        className="pt-2 border-t border-[#282d3b] flex items-center space-x-2"
+        className="pt-2 border-t border-[#f1f3f7] flex items-center space-x-2"
       >
         <input
           type="text"
@@ -189,12 +189,12 @@ export const FollowUpChat: React.FC<FollowUpChatProps> = ({
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask Dr. Maya a follow-up question..."
           disabled={isLoading}
-          className="flex-1 bg-[#141720] border border-[#282d3b] focus:border-electric rounded-xl px-3.5 py-2 text-xs text-[#f6f4ef] placeholder-neutral-500 focus:outline-none focus:ring-1 focus:ring-electric transition-all disabled:opacity-50 font-sans"
+          className="flex-1 bg-neutral-50 border border-neutral-200 focus:border-electric rounded-xl px-3.5 py-2 text-xs text-[#0d0e11] placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-electric/20 transition-all disabled:opacity-50 font-sans"
         />
         <button
           type="submit"
           disabled={isLoading || !input.trim()}
-          className="p-2 rounded-xl bg-electric hover:bg-[#0a4fbf] text-white disabled:opacity-40 transition-colors flex items-center justify-center shadow-md shadow-electric/30"
+          className="p-2 rounded-xl bg-electric hover:bg-[#0958d9] text-white disabled:opacity-40 transition-all flex items-center justify-center shadow-xs active:scale-95"
         >
           <Send className="w-3.5 h-3.5" />
         </button>

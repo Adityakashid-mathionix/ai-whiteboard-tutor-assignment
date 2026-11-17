@@ -68,11 +68,11 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   };
 
   return (
-    <div className="flex flex-col w-full bg-[#121620] rounded-2xl border border-[#282d3b] p-4 shadow-2xl space-y-3">
+    <div className="flex flex-col w-full bg-white rounded-2xl border border-[#e2e5eb] p-4 shadow-[0_8px_30px_rgba(0,0,0,0.05)] space-y-3">
       {/* Top Scrubber / Segment Pills Timeline */}
       <div className="w-full">
-        <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 mb-2 px-1">
-          <span className="font-mono text-neutral-300">
+        <div className="flex items-center justify-between text-[11px] font-mono text-neutral-500 mb-2 px-1">
+          <span className="font-mono text-neutral-700 font-semibold">
             Chapter {totalSegments > 0 ? currentSegmentIndex + 1 : 0} of {totalSegments}
           </span>
           <span className="truncate max-w-[280px] text-electric font-semibold font-serif italic text-sm">
@@ -91,20 +91,20 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
                 key={seg.id || idx}
                 onClick={() => onSeek(idx)}
                 title={`Seek to: ${seg.heading}`}
-                className="group flex flex-col space-y-1 text-left"
+                className="group flex flex-col space-y-1 text-left active:scale-95 transition-transform"
               >
                 <div
                   className={`h-2 rounded-full transition-all duration-300 ${
                     isActive
-                      ? "bg-electric shadow-[0_0_10px_rgba(22,119,255,0.7)]"
+                      ? "bg-electric shadow-[0_0_8px_rgba(22,119,255,0.6)]"
                       : isCompleted
-                      ? "bg-emerald-500/80"
-                      : "bg-[#222530] group-hover:bg-[#282d3b]"
+                      ? "bg-emerald-500"
+                      : "bg-neutral-100 group-hover:bg-neutral-200"
                   }`}
                 />
                 <span
                   className={`text-[9px] font-mono truncate hidden sm:block ${
-                    isActive ? "text-electric font-bold" : "text-neutral-500"
+                    isActive ? "text-electric font-bold" : "text-neutral-400 group-hover:text-neutral-600"
                   }`}
                 >
                   {idx + 1}. {seg.heading}
@@ -122,7 +122,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
           <button
             onClick={onRestart}
             title="Restart Masterclass"
-            className="p-2 rounded-xl bg-[#141720] hover:bg-[#181c28] border border-[#282d3b] text-neutral-300 hover:text-white transition-all active:scale-95 shadow-sm"
+            className="p-2 rounded-xl bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 text-neutral-700 hover:text-[#0d0e11] transition-all duration-200 active:scale-95 shadow-xs"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
@@ -131,7 +131,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
             onClick={handlePrev}
             disabled={currentSegmentIndex <= 0}
             title="Previous Chapter (←)"
-            className="p-2 rounded-xl bg-[#141720] hover:bg-[#181c28] border border-[#282d3b] text-neutral-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all active:scale-95 shadow-sm"
+            className="p-2 rounded-xl bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 text-neutral-700 hover:text-[#0d0e11] disabled:opacity-30 disabled:pointer-events-none transition-all duration-200 active:scale-95 shadow-xs"
           >
             <SkipBack className="w-4 h-4" />
           </button>
@@ -140,7 +140,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         {/* Center: Big Play / Pause Button */}
         <button
           onClick={handleMainAction}
-          className="flex items-center space-x-2 px-6 py-2.5 rounded-full bg-electric hover:bg-[#0a4fbf] text-white font-mono text-xs font-semibold shadow-electric hover:scale-105 active:scale-95 transition-all"
+          className="flex items-center space-x-2 px-6 py-2.5 rounded-full bg-electric hover:bg-[#0958d9] text-white font-mono text-xs font-semibold shadow-md shadow-electric/25 hover:scale-105 active:scale-95 transition-all duration-200"
         >
           {status === "playing" ? (
             <>
@@ -161,21 +161,21 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
             onClick={handleNext}
             disabled={currentSegmentIndex >= totalSegments - 1}
             title="Next Chapter (→)"
-            className="p-2 rounded-xl bg-[#141720] hover:bg-[#181c28] border border-[#282d3b] text-neutral-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all active:scale-95 shadow-sm"
+            className="p-2 rounded-xl bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 text-neutral-700 hover:text-[#0d0e11] disabled:opacity-30 disabled:pointer-events-none transition-all duration-200 active:scale-95 shadow-xs"
           >
             <SkipForward className="w-4 h-4" />
           </button>
 
           {/* Speed Selector */}
-          <div className="hidden sm:flex items-center bg-[#141720] rounded-xl border border-[#282d3b] p-0.5">
+          <div className="hidden sm:flex items-center bg-neutral-100 rounded-xl border border-neutral-200 p-0.5">
             {speeds.map((s) => (
               <button
                 key={s}
                 onClick={() => onSetSpeed(s)}
-                className={`px-2 py-1 text-[10px] font-mono rounded-lg transition-all ${
+                className={`px-2 py-1 text-[10px] font-mono rounded-lg transition-all duration-150 ${
                   speed === s
-                    ? "bg-electric text-white font-bold shadow-xs"
-                    : "text-neutral-400 hover:text-white"
+                    ? "bg-white text-electric font-bold shadow-xs scale-105"
+                    : "text-neutral-500 hover:text-[#0d0e11]"
                 }`}
               >
                 {s}x
@@ -187,10 +187,10 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
           <button
             onClick={onToggleMute}
             title={isMuted ? "Unmute Narration (M)" : "Mute Narration (M)"}
-            className={`p-2 rounded-xl border transition-all active:scale-95 shadow-sm ${
+            className={`p-2 rounded-xl border transition-all duration-200 active:scale-95 shadow-xs ${
               isMuted
-                ? "bg-rose-500/10 border-rose-500/40 text-rose-400"
-                : "bg-[#141720] hover:bg-[#181c28] border-[#282d3b] text-neutral-300 hover:text-white"
+                ? "bg-rose-50 border-rose-200 text-rose-600"
+                : "bg-neutral-50 hover:bg-neutral-100 border-neutral-200 text-neutral-700 hover:text-[#0d0e11]"
             }`}
           >
             {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}

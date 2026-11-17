@@ -24,6 +24,7 @@ import {
   X,
   Crosshair,
   Layers,
+  HelpCircle,
 } from "lucide-react";
 
 interface StudentStroke {
@@ -145,7 +146,7 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
       const newStroke: StudentStroke = {
         id: `stroke-${Date.now()}-${Math.random()}`,
         tool: activeTool,
-        color: activeTool === "highlighter" ? "rgba(255, 235, 153, 0.45)" : penColor,
+        color: activeTool === "highlighter" ? "rgba(254, 240, 138, 0.55)" : penColor,
         width: activeTool === "highlighter" ? 18 : 3,
         points: [pt],
       };
@@ -218,25 +219,25 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative flex flex-col w-full h-full bg-[#121620] rounded-2xl border border-[#282d3b] shadow-2xl overflow-hidden transition-all duration-300 ${
+      className={`relative flex flex-col w-full h-full bg-white rounded-2xl border border-[#e2e5eb] shadow-[0_12px_40px_rgba(0,0,0,0.06)] overflow-hidden transition-all duration-300 ${
         isFullscreen ? "p-4" : ""
       }`}
     >
       {/* Smartboard Hardware Header Bar */}
-      <div className="flex flex-wrap items-center justify-between px-4 py-2.5 bg-[#141720] border-b border-[#282d3b] z-20 gap-2">
+      <div className="flex flex-wrap items-center justify-between px-4 py-2.5 bg-white border-b border-[#e5e7eb] z-20 gap-2 shadow-xs">
         {/* Left: Hardware Model & Chapter Tag */}
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-electric shadow-[0_0_8px_rgba(22,119,255,0.8)]" />
-            <span className="text-[11px] font-mono tracking-widest text-neutral-200 font-bold uppercase">
+            <span className="w-2.5 h-2.5 rounded-full bg-electric shadow-[0_0_8px_rgba(22,119,255,0.7)]" />
+            <span className="text-[11px] font-mono tracking-widest text-neutral-800 font-bold uppercase">
               SMARTBOARD
             </span>
           </div>
 
-          <div className="h-3.5 w-px bg-[#282d3b]" />
+          <div className="h-3.5 w-px bg-neutral-200" />
 
           {currentSegmentHeading && (
-            <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#181c28] border border-[#282d3b] text-xs text-electric font-serif italic max-w-sm truncate shadow-sm">
+            <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-electric/10 border border-electric/25 text-xs text-electric font-serif italic max-w-sm truncate shadow-xs">
               <Sparkles className="w-3.5 h-3.5 text-electric flex-shrink-0" />
               <span className="truncate">{currentSegmentHeading}</span>
             </div>
@@ -244,15 +245,15 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
         </div>
 
         {/* Center: Stylus & Student Tools Bar */}
-        <div className="flex items-center space-x-1 bg-[#181c28] p-1 rounded-xl border border-[#282d3b]">
+        <div className="flex items-center space-x-1 bg-neutral-100 p-1 rounded-xl border border-neutral-200">
           {/* Pointer Tool */}
           <button
             onClick={() => setActiveTool("pointer")}
             title="Inspect / Pointer Tool"
-            className={`p-1.5 rounded-lg text-xs transition-colors ${
+            className={`p-1.5 rounded-lg text-xs transition-all duration-200 ${
               activeTool === "pointer"
-                ? "bg-electric text-white shadow-sm"
-                : "text-neutral-400 hover:text-white"
+                ? "bg-electric text-white shadow-sm scale-105"
+                : "text-neutral-600 hover:text-[#0d0e11] hover:bg-white"
             }`}
           >
             <MousePointer2 className="w-3.5 h-3.5" />
@@ -262,25 +263,25 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
           <button
             onClick={() => setActiveTool("pan")}
             title="Pan Canvas Mode"
-            className={`p-1.5 rounded-lg text-xs transition-colors ${
+            className={`p-1.5 rounded-lg text-xs transition-all duration-200 ${
               activeTool === "pan"
-                ? "bg-electric text-white shadow-sm"
-                : "text-neutral-400 hover:text-white"
+                ? "bg-electric text-white shadow-sm scale-105"
+                : "text-neutral-600 hover:text-[#0d0e11] hover:bg-white"
             }`}
           >
             <Move className="w-3.5 h-3.5" />
           </button>
 
-          <div className="h-3 w-px bg-[#282d3b] mx-0.5" />
+          <div className="h-3 w-px bg-neutral-300 mx-0.5" />
 
           {/* Student Pen */}
           <button
             onClick={() => setActiveTool("pen")}
             title="Student Notes Pen"
-            className={`p-1.5 rounded-lg text-xs transition-colors ${
+            className={`p-1.5 rounded-lg text-xs transition-all duration-200 ${
               activeTool === "pen"
-                ? "bg-electric text-white shadow-sm"
-                : "text-neutral-400 hover:text-white"
+                ? "bg-electric text-white shadow-sm scale-105"
+                : "text-neutral-600 hover:text-[#0d0e11] hover:bg-white"
             }`}
           >
             <PenTool className="w-3.5 h-3.5" />
@@ -291,7 +292,7 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
             <div className="flex items-center space-x-1 px-1">
               {[
                 { color: "#1677ff", title: "Electric Blue" },
-                { color: "#0c0d10", title: "Carbon Black" },
+                { color: "#0d0e11", title: "Carbon Black" },
                 { color: "#e62e4d", title: "Crimson" },
                 { color: "#00b875", title: "Emerald" },
               ].map((c) => (
@@ -299,8 +300,8 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
                   key={c.color}
                   onClick={() => setPenColor(c.color)}
                   title={c.title}
-                  className={`w-3 h-3 rounded-full transition-transform ${
-                    penColor === c.color ? "scale-125 ring-1 ring-white" : "opacity-70 hover:opacity-100"
+                  className={`w-3.5 h-3.5 rounded-full transition-transform ${
+                    penColor === c.color ? "scale-125 ring-2 ring-white shadow-sm" : "opacity-75 hover:opacity-100"
                   }`}
                   style={{ backgroundColor: c.color }}
                 />
@@ -312,10 +313,10 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
           <button
             onClick={() => setActiveTool("highlighter")}
             title="Highlighter Marker"
-            className={`p-1.5 rounded-lg text-xs transition-colors ${
+            className={`p-1.5 rounded-lg text-xs transition-all duration-200 ${
               activeTool === "highlighter"
-                ? "bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-sm"
-                : "text-neutral-400 hover:text-white"
+                ? "bg-amber-400 text-slate-900 shadow-sm scale-105"
+                : "text-neutral-600 hover:text-[#0d0e11] hover:bg-white"
             }`}
           >
             <Highlighter className="w-3.5 h-3.5" />
@@ -325,10 +326,10 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
           <button
             onClick={() => setActiveTool("eraser")}
             title="Erase Student Drawings"
-            className={`p-1.5 rounded-lg text-xs transition-colors ${
+            className={`p-1.5 rounded-lg text-xs transition-all duration-200 ${
               activeTool === "eraser"
-                ? "bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-sm"
-                : "text-neutral-400 hover:text-white"
+                ? "bg-rose-500 text-white shadow-sm scale-105"
+                : "text-neutral-600 hover:text-[#0d0e11] hover:bg-white"
             }`}
           >
             <Eraser className="w-3.5 h-3.5" />
@@ -339,28 +340,28 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
               <button
                 onClick={handleUndo}
                 title="Undo stroke"
-                className="p-1.5 rounded-lg text-neutral-400 hover:text-white"
+                className="p-1.5 rounded-lg text-neutral-600 hover:text-[#0d0e11] hover:bg-white transition-colors"
               >
                 <Undo2 className="w-3 h-3" />
               </button>
               <button
                 onClick={handleClearStudentDrawings}
                 title="Clear my annotations"
-                className="p-1.5 rounded-lg text-rose-400 hover:text-rose-200"
+                className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-white transition-colors"
               >
                 <Trash2 className="w-3 h-3" />
               </button>
             </>
           )}
 
-          <div className="h-3 w-px bg-[#282d3b] mx-0.5" />
+          <div className="h-3 w-px bg-neutral-300 mx-0.5" />
 
           {/* Laser Pointer */}
           <button
             onClick={() => setShowLaser(!showLaser)}
             title={showLaser ? "Disable Teacher Laser" : "Enable Teacher Laser"}
-            className={`p-1.5 rounded-lg text-xs transition-colors ${
-              showLaser ? "text-rose-400 bg-rose-500/10" : "text-neutral-500"
+            className={`p-1.5 rounded-lg text-xs transition-all duration-200 ${
+              showLaser ? "text-rose-500 bg-rose-50" : "text-neutral-400"
             }`}
           >
             <Crosshair className="w-3.5 h-3.5" />
@@ -370,50 +371,50 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
           <button
             onClick={onToggleGrid}
             title={showGrid ? "Hide Grid Matrix" : "Show Grid Matrix"}
-            className={`p-1.5 rounded-lg text-xs transition-colors ${
-              showGrid ? "bg-[#282d3b] text-electric" : "text-neutral-400 hover:text-white"
+            className={`p-1.5 rounded-lg text-xs transition-all duration-200 ${
+              showGrid ? "bg-white text-electric shadow-xs font-semibold" : "text-neutral-600 hover:text-[#0d0e11]"
             }`}
           >
             <Grid className="w-3.5 h-3.5" />
           </button>
 
-          <div className="h-3 w-px bg-[#282d3b] mx-0.5" />
+          <div className="h-3 w-px bg-neutral-300 mx-0.5" />
 
           {/* Zoom controls */}
           <button
             onClick={onZoomOut}
             title="Zoom Out"
             disabled={zoom <= 0.75}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-white disabled:opacity-30"
+            className="p-1.5 rounded-lg text-neutral-600 hover:text-[#0d0e11] disabled:opacity-30"
           >
             <ZoomOut className="w-3.5 h-3.5" />
           </button>
-          <span className="text-[11px] font-mono text-neutral-200 w-9 text-center font-bold">
+          <span className="text-[11px] font-mono text-neutral-700 w-9 text-center font-bold">
             {Math.round(zoom * 100)}%
           </span>
           <button
             onClick={onZoomIn}
             title="Zoom In"
             disabled={zoom >= 1.5}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-white disabled:opacity-30"
+            className="p-1.5 rounded-lg text-neutral-600 hover:text-[#0d0e11] disabled:opacity-30"
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={handleResetAll}
             title="Reset Zoom & Pan"
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-white"
+            className="p-1.5 rounded-lg text-neutral-600 hover:text-[#0d0e11]"
           >
             <RotateCcw className="w-3 h-3" />
           </button>
 
-          <div className="h-3 w-px bg-[#282d3b] mx-0.5" />
+          <div className="h-3 w-px bg-neutral-300 mx-0.5" />
 
           {/* Fullscreen */}
           <button
             onClick={toggleFullscreen}
             title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-white"
+            className="p-1.5 rounded-lg text-neutral-600 hover:text-[#0d0e11]"
           >
             {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
           </button>
@@ -421,12 +422,12 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
       </div>
 
       {/* Main Whiteboard Canvas Surface */}
-      <div className="relative flex-1 w-full h-full min-h-[460px] lg:min-h-[540px] flex items-center justify-center overflow-hidden p-4 select-none bg-[#0c0d10]">
+      <div className="relative flex-1 w-full h-full min-h-[460px] lg:min-h-[540px] flex items-center justify-center overflow-hidden p-4 select-none bg-[#f1f3f7]">
         {/* The Porcelain White Smartboard Chassis */}
         <div
-          className={`w-full h-full max-w-[1000px] max-h-[600px] rounded-xl overflow-hidden border-2 border-[#282d3b] transition-transform duration-100 ease-out cursor-${
+          className={`w-full h-full max-w-[1000px] max-h-[600px] rounded-xl overflow-hidden border border-[#d8dce6] transition-transform duration-100 ease-out cursor-${
             activeTool === "pan" ? (isPanning ? "grabbing" : "grab") : activeTool === "pen" || activeTool === "highlighter" ? "crosshair" : "default"
-          } ${showGrid ? "smartboard-porcelain" : "bg-[#fbf9f5] shadow-[0_12px_45px_rgba(0,0,0,0.5)]"}`}
+          } ${showGrid ? "smartboard-porcelain" : "bg-white shadow-[0_10px_35px_rgba(0,0,0,0.06)]"}`}
           style={{
             transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
           }}
@@ -528,7 +529,7 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
                   cy={laserPos.y}
                   r="4"
                   fill="#e62e4d"
-                  filter="drop-shadow(0 0 8px #ff3355)"
+                  filter="drop-shadow(0 0 6px #ff3355)"
                 />
               </g>
             )}
@@ -539,7 +540,7 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
                 <text
                   x="500"
                   y="265"
-                  fill="#181c28"
+                  fill="#1e293b"
                   fontSize="24"
                   textAnchor="middle"
                   fontFamily="Newsreader, Georgia, serif"
@@ -564,27 +565,27 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
 
         {/* Floating Concept Inspection Card (When Clicking Objects with Details) */}
         {inspectedAction && (
-          <div className="absolute top-6 left-1/2 -translate-x-1/2 max-w-lg w-full px-4 z-30 animate-in fade-in slide-in-from-top-4 duration-200">
-            <div className="p-4 rounded-xl bg-[#141720]/95 border border-electric/40 text-[#f6f4ef] shadow-2xl backdrop-blur-xl flex items-start justify-between space-x-3">
+          <div className="absolute top-6 left-1/2 -translate-x-1/2 max-w-lg w-full px-4 z-30 animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="p-4 rounded-2xl bg-white/95 border border-[#e2e5eb] text-[#0d0e11] shadow-[0_20px_50px_rgba(0,0,0,0.12)] backdrop-blur-xl flex items-start justify-between space-x-3">
               <div className="flex items-start space-x-3">
-                <div className="p-2 rounded-lg bg-electric/15 text-electric mt-0.5">
+                <div className="p-2 rounded-xl bg-electric/10 text-electric mt-0.5 shadow-xs">
                   <Info className="w-4 h-4" />
                 </div>
                 <div>
                   <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-electric">
                     Concept Breakdown
                   </h4>
-                  <p className="text-sm font-serif font-bold text-white mt-0.5">
+                  <p className="text-base font-serif font-bold text-[#0d0e11] mt-0.5">
                     {(inspectedAction as any).text || (inspectedAction as any).caption || (inspectedAction as any).label || "Diagram Component"}
                   </p>
-                  <p className="text-xs text-neutral-300 mt-1 leading-relaxed font-sans">
+                  <p className="text-xs text-neutral-600 mt-1 leading-relaxed font-sans">
                     {(inspectedAction as any).details || (inspectedAction as any).tooltip || "This visual element represents a core component in the lesson flow."}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setInspectedAction(null)}
-                className="p-1 rounded-md text-neutral-400 hover:text-white hover:bg-[#181c28] transition-colors"
+                className="p-1 rounded-md text-neutral-400 hover:text-[#0d0e11] hover:bg-neutral-100 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -594,7 +595,7 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
 
         {/* Live Audio Oscilloscope Wave Indicator (When Speaking) */}
         {status === "playing" && (
-          <div className="absolute bottom-5 left-5 flex items-center space-x-2 px-3 py-1.5 rounded-full bg-[#141720]/95 border border-[#282d3b] backdrop-blur-md shadow-lg pointer-events-none">
+          <div className="absolute bottom-5 left-5 flex items-center space-x-2 px-3 py-1.5 rounded-full bg-white/95 border border-[#e2e5eb] backdrop-blur-md shadow-md pointer-events-none">
             <Radio className="w-3.5 h-3.5 text-electric animate-pulse" />
             <span className="text-[10px] font-mono font-bold text-electric">
               VOICE NARRATION SYNC
@@ -609,7 +610,7 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
         )}
 
         {/* Resolution Badge Bottom Right */}
-        <div className="absolute bottom-5 right-5 flex items-center space-x-2 px-3 py-1.5 rounded-full bg-[#141720]/95 border border-[#282d3b] text-[11px] font-mono text-neutral-300 backdrop-blur-md pointer-events-none shadow-lg">
+        <div className="absolute bottom-5 right-5 flex items-center space-x-2 px-3 py-1.5 rounded-full bg-white/95 border border-[#e2e5eb] text-[11px] font-mono text-neutral-600 backdrop-blur-md pointer-events-none shadow-md">
           <div
             className={`w-2 h-2 rounded-full ${
               status === "playing"
@@ -617,13 +618,13 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
                 : status === "paused"
                 ? "bg-amber-400 shadow-[0_0_8px_rgba(255,170,0,0.8)]"
                 : status === "completed"
-                ? "bg-emerald-400 shadow-[0_0_8px_rgba(0,184,117,0.8)]"
-                : "bg-neutral-500"
+                ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+                : "bg-neutral-400"
             }`}
           />
-          <span className="capitalize font-semibold">{status}</span>
-          <span className="text-neutral-500">•</span>
-          <span className="text-neutral-400 font-mono text-[10px]">1000×600 VECTOR</span>
+          <span className="capitalize font-semibold text-neutral-800">{status}</span>
+          <span className="text-neutral-300">•</span>
+          <span className="text-neutral-500 font-mono text-[10px]">1000×600 VECTOR</span>
         </div>
       </div>
     </div>

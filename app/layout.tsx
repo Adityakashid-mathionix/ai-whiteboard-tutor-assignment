@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0c0d10",
+  themeColor: "#f8f9fb",
 };
 
 export default function RootLayout({
@@ -26,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -35,7 +35,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&display=swap"
         />
       </head>
-      <body className="min-h-screen bg-[#0c0d10] text-[#f6f4ef] font-sans antialiased selection:bg-[#1677ff]/30 selection:text-white">
+      <body className="min-h-screen bg-[#f8f9fb] text-[#0d0e11] font-sans antialiased selection:bg-[#1677ff]/15 selection:text-[#1677ff]">
         {children}
       </body>
     </html>
