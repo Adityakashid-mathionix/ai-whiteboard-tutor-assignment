@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Sparkles, Volume2, Radio, CheckCircle2, Mic } from "lucide-react";
+import { Volume2, ChevronUp, ChevronDown } from "lucide-react";
 import { PlaybackStatus } from "@/types/lesson";
 
 interface AITeacherAvatarProps {
@@ -12,6 +12,11 @@ interface AITeacherAvatarProps {
   isFloating?: boolean;
 }
 
+/**
+ * Minimal teacher avatar that sits on the whiteboard.
+ * Clean SVG teacher silhouette with a pointer stick,
+ * subtle speaking animation, and live transcript card.
+ */
 export const AITeacherAvatar: React.FC<AITeacherAvatarProps> = ({
   status,
   currentSegmentHeading,
@@ -26,138 +31,142 @@ export const AITeacherAvatar: React.FC<AITeacherAvatarProps> = ({
     return (
       <button
         onClick={() => setIsMinimized(false)}
-        className="flex items-center space-x-2.5 px-3.5 py-2 rounded-full bg-white/95 border border-[#e4dfd3] shadow-lg text-xs font-medium text-[#121316] hover:border-[#1677ff] transition-all backdrop-blur-xl"
+        className="flex items-center space-x-2 px-3 py-2 rounded-xl bg-white/95 border border-neutral-200 shadow-lg text-xs font-medium text-[#121316] hover:border-[#1677ff] transition-all backdrop-blur-xl"
       >
-        <span className="w-2.5 h-2.5 rounded-full bg-[#1677ff] animate-pulse" />
-        <span className="font-mono text-[11px] font-semibold">Tutor AI (Expand)</span>
+        <span className={`w-2 h-2 rounded-full ${isSpeaking ? "bg-[#1677ff] animate-pulse" : "bg-neutral-400"}`} />
+        <span className="font-medium text-[11px]">{teacherName}</span>
+        <ChevronUp className="w-3 h-3 text-neutral-400" />
       </button>
     );
   }
 
   return (
     <div
-      className={`relative flex flex-col rounded-2xl border transition-all duration-300 ${
+      className={`relative flex items-start space-x-3 rounded-2xl border transition-all duration-300 ${
         isFloating
-          ? "bg-white/95 backdrop-blur-2xl border-[#e4dfd3] shadow-[0_20px_50px_rgba(0,0,0,0.08)] p-3.5 max-w-sm"
-          : "bg-white border-[#e6e2d8] shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-4"
+          ? "bg-white/95 backdrop-blur-2xl border-neutral-200 shadow-[0_12px_40px_rgba(0,0,0,0.08)] p-3 max-w-xs"
+          : "bg-white border-[#e6e2d8] shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-3.5"
       }`}
     >
-      {/* Top Identity Row */}
-      <div className="flex items-center justify-between pb-3 border-b border-[#f0ede6] mb-3">
-        <div className="flex items-center space-x-2.5">
-          <div className="relative flex items-center justify-center">
-            <span
-              className={`block w-2.5 h-2.5 rounded-full ${
-                isSpeaking
-                  ? "bg-[#1677ff] shadow-[0_0_10px_rgba(22,119,255,0.8)]"
-                  : status === "paused"
-                  ? "bg-amber-500"
-                  : "bg-neutral-400"
-              }`}
-            />
-            {isSpeaking && (
-              <span className="absolute -inset-1 rounded-full bg-[#1677ff]/40 animate-ping" />
-            )}
-          </div>
+      {/* Teacher Avatar — Clean SVG character */}
+      <div className="relative flex-shrink-0">
+        <svg
+          width="52"
+          height="52"
+          viewBox="0 0 52 52"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="drop-shadow-sm"
+        >
+          {/* Background circle */}
+          <circle cx="26" cy="26" r="25" fill="#f0f4ff" stroke="#d4deff" strokeWidth="1.5" />
 
-          <div>
-            <div className="flex items-center space-x-1.5">
-              <h4 className="text-xs font-semibold text-[#121316] tracking-tight font-sans">
-                {teacherName}
-              </h4>
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[#1677ff]/10 text-[#1677ff] border border-[#1677ff]/20">
-                AI FELLOW
-              </span>
-            </div>
-            <p className="text-[10px] text-neutral-500 font-medium">
-              {isSpeaking
-                ? "Live Synchronized Lecture"
-                : status === "paused"
-                ? "Narration Paused"
-                : "Ready to Teach"}
-            </p>
-          </div>
-        </div>
+          {/* Head */}
+          <circle cx="26" cy="18" r="8" fill="#f5d0a9" />
 
-        {isFloating && (
-          <button
-            onClick={() => setIsMinimized(true)}
-            className="text-neutral-400 hover:text-neutral-700 text-xs px-2 py-0.5 rounded-md hover:bg-neutral-100 transition-colors"
-            title="Minimize"
-          >
-            ✕
-          </button>
-        )}
+          {/* Hair */}
+          <path d="M18 16c0-5 3.5-8 8-8s8 3 8 8c0 1-0.5 2-1 2.5 0-4-3-7-7-7s-7 3-7 7c-0.5-0.5-1-1.5-1-2.5z" fill="#3d2c1e" />
+
+          {/* Eyes */}
+          <circle cx="23" cy="17.5" r="1.2" fill="#1a1a2e" />
+          <circle cx="29" cy="17.5" r="1.2" fill="#1a1a2e" />
+
+          {/* Smile */}
+          <path d="M23 21.5 Q26 24 29 21.5" stroke="#c27c5a" strokeWidth="1" fill="none" strokeLinecap="round" />
+
+          {/* Body / Shirt */}
+          <path d="M18 30 Q18 26 26 26 Q34 26 34 30 L36 44 L16 44 Z" fill="#1677ff" />
+
+          {/* Collar detail */}
+          <path d="M23 26 L26 30 L29 26" stroke="#ffffff" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+
+          {/* Teaching pointer arm — slight animation via CSS */}
+          <g className={isSpeaking ? "animate-[teacher-point_3s_ease-in-out_infinite]" : ""}>
+            <line x1="34" y1="30" x2="44" y2="20" stroke="#f5d0a9" strokeWidth="2.5" strokeLinecap="round" />
+            {/* Pointer tip */}
+            <circle cx="44" cy="20" r="1.5" fill="#d97706" />
+          </g>
+
+          {/* Speaking indicator — subtle mouth animation */}
+          {isSpeaking && (
+            <ellipse cx="26" cy="22" rx="2" ry="1.2" fill="#c27c5a">
+              <animate attributeName="ry" values="1.2;1.8;0.8;1.5;1.2" dur="0.6s" repeatCount="indefinite" />
+            </ellipse>
+          )}
+        </svg>
+
+        {/* Status dot */}
+        <span
+          className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
+            isSpeaking
+              ? "bg-[#1677ff]"
+              : status === "paused"
+              ? "bg-amber-500"
+              : "bg-neutral-400"
+          }`}
+        />
       </div>
 
-      {/* Main Visualizer & Live Transcript */}
-      <div className="flex items-start space-x-3.5">
-        {/* Apple/Hume Style Ethereal Voice Harmonic Orb */}
-        <div className="relative flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0f2b5c] via-[#1677ff] to-[#00d2ff] p-0.5 flex items-center justify-center overflow-hidden shadow-sm group">
-          {/* Internal undulating glow layers */}
-          <div
-            className={`absolute inset-0 rounded-2xl bg-gradient-to-tr from-[#1677ff] via-[#4338ca] to-[#06b6d4] opacity-90 transition-transform duration-700 ${
-              isSpeaking ? "animate-pulse scale-105" : "scale-100"
-            }`}
-          />
-          {/* Ambient harmonic rings */}
-          <div
-            className={`absolute inset-1 rounded-xl border border-white/30 ${
-              isSpeaking ? "animate-spin [animation-duration:8s]" : ""
-            }`}
-          />
-
-          {/* Central Acoustic Icon */}
-          <div className="relative z-10 flex items-center justify-center text-white">
-            {isSpeaking ? (
-              <Radio className="w-5 h-5 animate-pulse text-white drop-shadow-md" />
-            ) : (
-              <Volume2 className="w-5 h-5 text-white/90" />
-            )}
+      {/* Identity + Live Transcript */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-1.5">
+            <h4 className="text-xs font-semibold text-[#121316] tracking-tight">
+              {teacherName}
+            </h4>
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[#1677ff]/10 text-[#1677ff] border border-[#1677ff]/20">
+              TUTOR
+            </span>
           </div>
+
+          {isFloating && (
+            <button
+              onClick={() => setIsMinimized(true)}
+              className="p-0.5 rounded text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors"
+              title="Minimize"
+            >
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
-        {/* Dynamic Spoken Dialogue Stream */}
-        <div className="flex-1 min-w-0">
-          <div className="p-2.5 rounded-xl bg-[#faf8f5] border border-[#e8e4db] text-xs text-neutral-800 leading-relaxed font-sans shadow-2xs">
-            {isSpeaking ? (
-              <div>
-                <span className="font-mono text-[9px] font-bold text-[#1677ff] uppercase tracking-wider block mb-0.5">
-                  Spoken Script:
-                </span>
-                <p className="line-clamp-3 text-[#121316] font-serif italic text-[11px] leading-snug">
-                  “{narration || "Follow the whiteboard diagrams as we explore this core concept."}”
-                </p>
-              </div>
-            ) : status === "paused" ? (
-              <p className="text-neutral-600 text-[11px]">
-                “Lecture paused. Press <kbd className="px-1 py-0.5 rounded bg-white border border-neutral-300 font-mono text-[9px]">Space</kbd> or click <strong>Play</strong> to continue.”
-              </p>
-            ) : (
-              <p className="text-neutral-600 text-[11px]">
-                “Welcome! Press <strong>Play Masterclass</strong> to begin interactive visual teaching.”
-              </p>
-            )}
-          </div>
+        {/* Spoken transcript */}
+        <div className="mt-1.5 p-2 rounded-lg bg-[#faf8f5] border border-[#e8e4db] text-[11px] leading-relaxed">
+          {isSpeaking ? (
+            <p className="line-clamp-2 text-[#121316]">
+              {narration || "Follow the whiteboard as we explore this concept."}
+            </p>
+          ) : status === "paused" ? (
+            <p className="text-neutral-500">
+              Paused. Press <kbd className="px-1 py-0.5 rounded bg-white border border-neutral-300 font-mono text-[9px]">Space</kbd> to continue.
+            </p>
+          ) : (
+            <p className="text-neutral-500">
+              Press <strong>Play</strong> to begin the lesson.
+            </p>
+          )}
+        </div>
 
-          {/* Real-time frequency equalizer animation */}
-          <div className="flex items-center justify-between mt-2 px-0.5">
-            <div className="flex items-center space-x-1 text-[10px] text-neutral-500 font-mono">
-              <Sparkles className="w-3 h-3 text-[#1677ff]" />
-              <span className="truncate max-w-[160px]">
-                {currentSegmentHeading || "Smartboard"}
-              </span>
+        {/* Audio indicator bar */}
+        <div className="flex items-center justify-between mt-1.5">
+          <span className="text-[10px] text-neutral-400 font-mono truncate max-w-[140px]">
+            {currentSegmentHeading || "Ready"}
+          </span>
+
+          {isSpeaking && (
+            <div className="flex items-center space-x-[3px]">
+              {[2, 3.5, 2, 4, 2.5].map((h, i) => (
+                <span
+                  key={i}
+                  className="w-[2px] rounded-full bg-[#1677ff]"
+                  style={{
+                    height: `${h * 2.5}px`,
+                    animation: `eq-bar 0.8s ease-in-out ${i * 0.12}s infinite alternate`,
+                  }}
+                />
+              ))}
             </div>
-
-            {isSpeaking && (
-              <div className="flex items-center space-x-0.5">
-                <span className="w-0.5 h-2.5 bg-[#1677ff] rounded-full animate-bounce [animation-delay:0ms]" />
-                <span className="w-0.5 h-4 bg-[#1677ff] rounded-full animate-bounce [animation-delay:150ms]" />
-                <span className="w-0.5 h-2 bg-[#1677ff] rounded-full animate-bounce [animation-delay:300ms]" />
-                <span className="w-0.5 h-3.5 bg-[#1677ff] rounded-full animate-bounce [animation-delay:450ms]" />
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </div>

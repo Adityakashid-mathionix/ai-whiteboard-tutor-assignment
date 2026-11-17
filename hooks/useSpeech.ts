@@ -11,6 +11,41 @@ interface UseSpeechOptions {
   isMuted?: boolean;
 }
 
+/**
+ * Premium voice ranking — tries to find the most natural, warm, human-sounding
+ * voice available on the user's device. Prioritises Microsoft Edge neural voices,
+ * then macOS premium voices, then Google voices, then any English voice.
+ */
+const PREMIUM_VOICE_PATTERNS: { name: RegExp; lang: RegExp }[] = [
+  // Microsoft Edge neural TTS voices — extremely natural
+  { name: /Microsoft\s+(Aria|Jenny|Guy|Eric|Sara|Steffan)/i, lang: /^en/i },
+  // Microsoft Online (Natural) voices
+  { name: /Natural/i, lang: /^en/i },
+  // macOS high-quality voices
+  { name: /Samantha|Ava|Allison|Tom|Karen/i, lang: /^en/i },
+  // Google TTS voices
+  { name: /Google\s+UK\s+English\s+(Female|Male)/i, lang: /^en/i },
+  { name: /Google\s+US\s+English/i, lang: /^en/i },
+  // Any voice with "Neural" or "Premium" or "Enhanced" in its name
+  { name: /Neural|Premium|Enhanced|Wavenet/i, lang: /^en/i },
+  // Any English voice as final fallback
+  { name: /.*/i, lang: /^en/i },
+];
+
+function selectBestVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
+  if (voices.length === 0) return null;
+
+  for (const pattern of PREMIUM_VOICE_PATTERNS) {
+    const match = voices.find(
+      (v) => pattern.name.test(v.name) && pattern.lang.test(v.lang)
+    );
+    if (match) return match;
+  }
+
+  // Absolute fallback: first voice
+  return voices[0];
+}
+
 export function useSpeech({
   onStart,
   onEnd,
@@ -38,19 +73,11 @@ export function useSpeech({
       const voices = window.speechSynthesis.getVoices();
       setAvailableVoices(voices);
 
-      // Prefer a natural, expressive English voice
-      const preferred = voices.find(
-        (v) =>
-          v.lang.startsWith("en") &&
-          (v.name.includes("Natural") ||
-            v.name.includes("Neural") ||
-            v.name.includes("Google") ||
-            v.name.includes("Samantha") ||
-            v.name.includes("Daniel") ||
-            v.name.includes("Jenny"))
-      ) || voices.find((v) => v.lang.startsWith("en")) || voices[0] || null;
-
-      setSelectedVoice(preferred);
+      // Only auto-select if the user hasn't manually chosen
+      setSelectedVoice((prev) => {
+        if (prev && voices.includes(prev)) return prev;
+        return selectBestVoice(voices);
+      });
     };
 
     loadVoices();
@@ -96,7 +123,6 @@ export function useSpeech({
         setIsPaused(false);
         onStart?.();
 
-        // Calculate simulated duration based on reading speed (~130 words per min adjusted for speed)
         const wordCount = text.trim().split(/\s+/).length;
         const durationMs = Math.max(3000, (wordCount / (2.2 * speed)) * 1000);
 
@@ -115,8 +141,10 @@ export function useSpeech({
         utterance.voice = selectedVoice;
       }
 
-      utterance.rate = speed;
-      utterance.pitch = 1.0;
+      // --- Voice Tuning for warm, teacher-like delivery ---
+      utterance.rate = Math.max(0.7, Math.min(speed * 0.92, 1.8));  // slightly slower = calmer
+      utterance.pitch = 1.05;   // slightly warm, not robotic
+      utterance.volume = 0.95;  // not blasting
 
       utterance.onstart = () => {
         setIsSpeaking(true);
@@ -155,7 +183,6 @@ export function useSpeech({
 
   const pause = useCallback(() => {
     if (isMuted && muteTimerRef.current) {
-      // In muted mode, just pause the timer
       clearTimeout(muteTimerRef.current);
       muteTimerRef.current = null;
       setIsPaused(true);
@@ -173,7 +200,6 @@ export function useSpeech({
   const resume = useCallback(
     (currentText?: string) => {
       if (isMuted && currentText) {
-        // Resume simulation
         speak(currentText);
         return;
       }
@@ -183,7 +209,6 @@ export function useSpeech({
           window.speechSynthesis.resume();
           setIsPaused(false);
         } else if (currentText && !window.speechSynthesis.speaking) {
-          // Fallback if browser dropped paused utterance
           speak(currentText);
         }
       }

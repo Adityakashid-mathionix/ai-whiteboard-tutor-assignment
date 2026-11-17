@@ -494,290 +494,286 @@ function normalizeLessonJson(raw: any, topic: string, visualAssets: EducationalV
       });
     }
 
-    // --- STRUCTURED PEDAGOGICAL LAYOUT COMPOSITION ---
-    // Every segment gets a clean, balanced layout:
-    // 1. Top Header Banner & Divider
-    // 2. Left: Real Educational Image (or Vector Diagram Frame)
-    // 3. Right: Structured Concept Card with points matching the spoken narration
-    // 4. Bottom: Key Takeaway Principle Card
+    // --- STRUCTURED PEDAGOGICAL LAYOUT ENGINE ---
+    // Varies layout per segment for visual variety:
+    //   - Segments with images: image left, notes right
+    //   - Segments without images: topic-aware flow/process/comparison diagrams
+    //   - Alternating color themes per chapter
 
-    const cardColor = idx % 3 === 0 ? "#1677ff" : idx % 3 === 1 ? "#059669" : "#d97706";
-    const cardBg =
-      idx % 3 === 0
-        ? "rgba(238, 242, 255, 0.75)"
-        : idx % 3 === 1
-        ? "rgba(236, 253, 245, 0.75)"
-        : "rgba(254, 243, 199, 0.75)";
+    const PALETTES = [
+      { accent: "#1677ff", bg: "rgba(238, 242, 255, 0.6)", light: "rgba(224, 242, 254, 0.5)" },
+      { accent: "#059669", bg: "rgba(236, 253, 245, 0.6)", light: "rgba(209, 250, 229, 0.5)" },
+      { accent: "#7c3aed", bg: "rgba(243, 232, 255, 0.6)", light: "rgba(237, 233, 254, 0.5)" },
+      { accent: "#0284c7", bg: "rgba(224, 242, 254, 0.6)", light: "rgba(207, 250, 254, 0.5)" },
+      { accent: "#d97706", bg: "rgba(254, 243, 199, 0.6)", light: "rgba(254, 249, 195, 0.5)" },
+    ];
+    const pal = PALETTES[idx % PALETTES.length];
 
-    // Break narration into actionable conceptual bullet points
+    // Extract narration sentences as bullet points
     const rawSentences = narration
       .replace(/([.?!])\s*(?=[A-Z])/g, "$1|")
       .split("|")
       .map((s: string) => s.trim().replace(/^["']|["']$/g, ""))
       .filter((s: string) => s.length > 12);
 
-    const cleanSentence = (s: string) => {
-      const trimmed = s.trim().replace(/^[^a-zA-Z0-9]+/, "");
-      return trimmed.length > 62 ? trimmed.substring(0, 59) + "..." : trimmed;
+    const clip = (s: string, max = 55) => {
+      const t = s.trim().replace(/^[^a-zA-Z0-9]+/, "");
+      return t.length > max ? t.substring(0, max - 3) + "..." : t;
     };
 
-    const bullet1 = rawSentences[0]
-      ? cleanSentence(rawSentences[0])
-      : `${heading}: Foundational principle and operational mechanism`;
+    const bullets = [
+      rawSentences[0] ? clip(rawSentences[0]) : `${heading}: core principle`,
+      rawSentences[1] ? clip(rawSentences[1]) : keyTakeaway ? clip(keyTakeaway) : `How ${heading} works in practice`,
+      rawSentences[2] ? clip(rawSentences[2]) : `Real-world significance and impact`,
+      rawSentences[3] ? clip(rawSentences[3]) : "",
+    ].filter(Boolean);
 
-    const bullet2 = rawSentences[1]
-      ? cleanSentence(rawSentences[1])
-      : keyTakeaway
-      ? cleanSentence(keyTakeaway)
-      : `Operational workflow and functional interactions in ${heading}`;
-
-    const bullet3 = rawSentences[2]
-      ? cleanSentence(rawSentences[2])
-      : keyTakeaway && keyTakeaway !== rawSentences[1]
-      ? cleanSentence(keyTakeaway)
-      : `Critical real-world outcome and systemic impact`;
-
-    // 1. Top Header Title Banner & Divider
-    const bannerActions: any[] = [
+    // --- HEADER (every segment) ---
+    const headerActions: any[] = [
       {
         type: "addText",
-        id: `banner-${idx}`,
+        id: `hdr-${idx}`,
         text: heading,
         x: 500,
-        y: 50,
-        fontSize: 21,
+        y: 48,
+        fontSize: 20,
         fill: "#0f172a",
         fontWeight: "bold",
         details: `Chapter ${idx + 1}: ${heading}`,
       },
       {
         type: "drawLine",
-        id: `div-${idx}`,
-        x1: 90,
-        y1: 72,
-        x2: 910,
-        y2: 72,
-        stroke: cardColor,
-        strokeWidth: 2,
+        id: `hdr-line-${idx}`,
+        x1: 80,
+        y1: 68,
+        x2: 920,
+        y2: 68,
+        stroke: pal.accent,
+        strokeWidth: 1.5,
+      },
+      // Chapter number badge
+      {
+        type: "addLabel",
+        id: `ch-badge-${idx}`,
+        text: `Chapter ${idx + 1}`,
+        x: 80,
+        y: 55,
+        color: pal.accent,
+        bg: pal.bg,
+        borderColor: pal.accent,
       },
     ];
 
-    // 2. Left Visual Area (Real Educational Image or Diagram Chassis)
+    // --- LEFT VISUAL AREA ---
     let leftVisualActions: any[] = [];
     if (!hasImage && visualAssets.length > 0) {
       const asset = visualAssets[idx % visualAssets.length];
       leftVisualActions = [
         {
           type: "drawImage",
-          id: `real-img-${idx + 1}`,
+          id: `img-${idx}`,
           url: asset.url,
           x: 80,
-          y: 105,
-          width: 385,
-          height: 290,
+          y: 90,
+          width: 400,
+          height: 300,
           caption: asset.title,
           attribution: asset.attribution.author,
           license: asset.attribution.license,
           details: asset.description || asset.title,
-          tooltip: asset.title,
         },
       ];
       hasImage = true;
     } else if (!hasImage) {
-      // If no image returned, create a structured Vector Diagram Frame
-      leftVisualActions = [
-        {
-          type: "drawRect",
-          id: `diag-frame-${idx}`,
-          x: 80,
-          y: 105,
-          width: 385,
-          height: 290,
-          rx: 14,
-          stroke: cardColor,
-          strokeWidth: 2,
-          fill: "rgba(248, 250, 252, 0.85)",
-          details: "Visual schematic model container.",
-          tooltip: "Model Schematic",
-        },
-        {
-          type: "addText",
-          id: `diag-title-${idx}`,
-          text: `Visual Schematic: ${heading}`,
-          x: 105,
-          y: 135,
-          fontSize: 14,
-          fill: cardColor,
-          fontWeight: "bold",
-        },
-        // Central illustrative nodes
-        {
-          type: "drawCircle",
-          id: `node-a-${idx}`,
-          cx: 180,
-          cy: 240,
-          r: 40,
-          stroke: cardColor,
-          strokeWidth: 2.5,
-          fill: "rgba(255, 255, 255, 0.9)",
-          details: "Input / Primary Component",
-        },
-        {
-          type: "addText",
-          id: `node-a-txt-${idx}`,
-          text: "Primary",
-          x: 180,
-          y: 245,
-          fontSize: 12,
-          fill: "#0f172a",
-          fontWeight: "bold",
-        },
-        {
-          type: "drawArrow",
-          id: `node-arr-${idx}`,
-          x1: 225,
-          y1: 240,
-          x2: 315,
-          y2: 240,
-          stroke: cardColor,
-          strokeWidth: 2.5,
-          label: "Mechanism",
-        },
-        {
-          type: "drawCircle",
-          id: `node-b-${idx}`,
-          cx: 360,
-          cy: 240,
-          r: 40,
-          stroke: "#059669",
-          strokeWidth: 2.5,
-          fill: "rgba(255, 255, 255, 0.9)",
-          details: "Output / Target Response",
-        },
-        {
-          type: "addText",
-          id: `node-b-txt-${idx}`,
-          text: "Response",
-          x: 360,
-          y: 245,
-          fontSize: 12,
-          fill: "#0f172a",
-          fontWeight: "bold",
-        },
-      ];
+      // --- VARIED FALLBACK DIAGRAMS (not the same two circles every time) ---
+      const layoutVariant = idx % 4;
+
+      if (layoutVariant === 0) {
+        // Flow diagram: 3 stages in a horizontal pipeline
+        const stages = [
+          { label: clip(heading.split(/\s+/).slice(0, 2).join(" "), 12), x: 140 },
+          { label: "Process", x: 310 },
+          { label: "Outcome", x: 480 },
+        ];
+        leftVisualActions = [
+          { type: "drawRect", id: `df-${idx}`, x: 80, y: 90, width: 460, height: 300, rx: 12, stroke: pal.accent, strokeWidth: 1.5, fill: "rgba(248, 250, 252, 0.8)" },
+          { type: "addText", id: `df-t-${idx}`, text: "Process Flow", x: 100, y: 118, fontSize: 13, fill: pal.accent, fontWeight: "bold" },
+        ];
+        stages.forEach((s, si) => {
+          leftVisualActions.push(
+            { type: "drawRect", id: `stg-${idx}-${si}`, x: s.x - 55, y: 165, width: 110, height: 55, rx: 8, stroke: si === 2 ? "#059669" : pal.accent, strokeWidth: 1.5, fill: si === 2 ? "rgba(209, 250, 229, 0.5)" : pal.light },
+            { type: "addText", id: `stg-t-${idx}-${si}`, text: s.label, x: s.x, y: 198, fontSize: 11, fill: "#0f172a", fontWeight: "bold" },
+          );
+          if (si < stages.length - 1) {
+            leftVisualActions.push(
+              { type: "drawArrow", id: `stg-a-${idx}-${si}`, x1: s.x + 60, y1: 192, x2: stages[si + 1].x - 60, y2: 192, stroke: pal.accent, strokeWidth: 1.5 },
+            );
+          }
+        });
+        // Add a summary note below
+        leftVisualActions.push(
+          { type: "addText", id: `df-note-${idx}`, text: clip(bullets[0] || heading, 48), x: 100, y: 280, fontSize: 11, fill: "#64748b" },
+        );
+
+      } else if (layoutVariant === 1) {
+        // Comparison / Two-column layout
+        leftVisualActions = [
+          { type: "drawRect", id: `cmp-${idx}`, x: 80, y: 90, width: 460, height: 300, rx: 12, stroke: pal.accent, strokeWidth: 1.5, fill: "rgba(248, 250, 252, 0.8)" },
+          { type: "addText", id: `cmp-t-${idx}`, text: "Key Comparison", x: 100, y: 118, fontSize: 13, fill: pal.accent, fontWeight: "bold" },
+          // Left column
+          { type: "drawRect", id: `cmpL-${idx}`, x: 95, y: 135, width: 205, height: 230, rx: 8, stroke: "#1677ff", strokeWidth: 1, fill: "rgba(238, 242, 255, 0.5)" },
+          { type: "addText", id: `cmpL-h-${idx}`, text: "Before / Input", x: 198, y: 160, fontSize: 12, fill: "#1677ff", fontWeight: "bold" },
+          { type: "addText", id: `cmpL-1-${idx}`, text: clip(bullets[0] || "Characteristic A", 28), x: 110, y: 195, fontSize: 11, fill: "#334155" },
+          { type: "addText", id: `cmpL-2-${idx}`, text: clip(bullets[1] || "Characteristic B", 28), x: 110, y: 220, fontSize: 11, fill: "#334155" },
+          // Right column
+          { type: "drawRect", id: `cmpR-${idx}`, x: 320, y: 135, width: 205, height: 230, rx: 8, stroke: "#059669", strokeWidth: 1, fill: "rgba(236, 253, 245, 0.5)" },
+          { type: "addText", id: `cmpR-h-${idx}`, text: "After / Output", x: 423, y: 160, fontSize: 12, fill: "#059669", fontWeight: "bold" },
+          { type: "addText", id: `cmpR-1-${idx}`, text: "Improved outcome", x: 335, y: 195, fontSize: 11, fill: "#334155" },
+          { type: "addText", id: `cmpR-2-${idx}`, text: "Better efficiency", x: 335, y: 220, fontSize: 11, fill: "#334155" },
+          // Arrow between columns
+          { type: "drawArrow", id: `cmp-arr-${idx}`, x1: 300, y1: 250, x2: 320, y2: 250, stroke: "#d97706", strokeWidth: 2 },
+        ];
+
+      } else if (layoutVariant === 2) {
+        // Hierarchical / tree structure
+        leftVisualActions = [
+          { type: "drawRect", id: `tree-${idx}`, x: 80, y: 90, width: 460, height: 300, rx: 12, stroke: pal.accent, strokeWidth: 1.5, fill: "rgba(248, 250, 252, 0.8)" },
+          { type: "addText", id: `tree-t-${idx}`, text: "Structure Overview", x: 100, y: 118, fontSize: 13, fill: pal.accent, fontWeight: "bold" },
+          // Root node
+          { type: "drawRect", id: `root-${idx}`, x: 240, y: 140, width: 140, height: 36, rx: 6, stroke: pal.accent, strokeWidth: 1.5, fill: pal.light },
+          { type: "addText", id: `root-t-${idx}`, text: clip(heading, 16), x: 310, y: 164, fontSize: 11, fill: "#0f172a", fontWeight: "bold" },
+          // Child 1
+          { type: "drawLine", id: `ch1-l-${idx}`, x1: 310, y1: 176, x2: 190, y2: 220, stroke: "#94a3b8", strokeWidth: 1 },
+          { type: "drawRect", id: `ch1-${idx}`, x: 120, y: 220, width: 140, height: 32, rx: 6, stroke: "#059669", strokeWidth: 1, fill: "rgba(236, 253, 245, 0.5)" },
+          { type: "addText", id: `ch1-t-${idx}`, text: "Component A", x: 190, y: 241, fontSize: 10, fill: "#059669", fontWeight: "bold" },
+          // Child 2
+          { type: "drawLine", id: `ch2-l-${idx}`, x1: 310, y1: 176, x2: 430, y2: 220, stroke: "#94a3b8", strokeWidth: 1 },
+          { type: "drawRect", id: `ch2-${idx}`, x: 360, y: 220, width: 140, height: 32, rx: 6, stroke: "#1677ff", strokeWidth: 1, fill: "rgba(238, 242, 255, 0.5)" },
+          { type: "addText", id: `ch2-t-${idx}`, text: "Component B", x: 430, y: 241, fontSize: 10, fill: "#1677ff", fontWeight: "bold" },
+          // Sub-nodes
+          { type: "drawLine", id: `sub1-l-${idx}`, x1: 190, y1: 252, x2: 150, y2: 290, stroke: "#94a3b8", strokeWidth: 1 },
+          { type: "drawRect", id: `sub1-${idx}`, x: 95, y: 290, width: 110, height: 28, rx: 5, stroke: "#94a3b8", strokeWidth: 1, fill: "#f8fafc" },
+          { type: "addText", id: `sub1-t-${idx}`, text: "Detail 1", x: 150, y: 308, fontSize: 9, fill: "#64748b" },
+          { type: "drawLine", id: `sub2-l-${idx}`, x1: 190, y1: 252, x2: 240, y2: 290, stroke: "#94a3b8", strokeWidth: 1 },
+          { type: "drawRect", id: `sub2-${idx}`, x: 185, y: 290, width: 110, height: 28, rx: 5, stroke: "#94a3b8", strokeWidth: 1, fill: "#f8fafc" },
+          { type: "addText", id: `sub2-t-${idx}`, text: "Detail 2", x: 240, y: 308, fontSize: 9, fill: "#64748b" },
+        ];
+
+      } else {
+        // Layered / stacked architecture
+        const layers = [
+          { label: "Foundation Layer", y: 310, color: "#059669", bg: "rgba(236, 253, 245, 0.5)" },
+          { label: "Core Layer", y: 240, color: "#1677ff", bg: "rgba(238, 242, 255, 0.5)" },
+          { label: "Application Layer", y: 170, color: "#7c3aed", bg: "rgba(243, 232, 255, 0.5)" },
+        ];
+        leftVisualActions = [
+          { type: "drawRect", id: `arch-${idx}`, x: 80, y: 90, width: 460, height: 300, rx: 12, stroke: pal.accent, strokeWidth: 1.5, fill: "rgba(248, 250, 252, 0.8)" },
+          { type: "addText", id: `arch-t-${idx}`, text: "Architecture Layers", x: 100, y: 118, fontSize: 13, fill: pal.accent, fontWeight: "bold" },
+        ];
+        layers.forEach((layer, li) => {
+          leftVisualActions.push(
+            { type: "drawRect", id: `layer-${idx}-${li}`, x: 110, y: layer.y, width: 400, height: 50, rx: 6, stroke: layer.color, strokeWidth: 1.5, fill: layer.bg },
+            { type: "addText", id: `layer-t-${idx}-${li}`, text: layer.label, x: 310, y: layer.y + 30, fontSize: 12, fill: layer.color, fontWeight: "bold" },
+          );
+          if (li < layers.length - 1) {
+            leftVisualActions.push(
+              { type: "drawArrow", id: `layer-a-${idx}-${li}`, x1: 310, y1: layer.y, x2: 310, y2: layers[li + 1].y + 50, stroke: "#94a3b8", strokeWidth: 1 },
+            );
+          }
+        });
+      }
     } else {
-      // LLM already had an image, retain it
       leftVisualActions = visualActions.filter((a) => a.type === "drawImage");
     }
 
-    // 3. Right Structured Concept Card
+    // --- RIGHT NOTES CARD ---
     const rightCardActions: any[] = [
       {
         type: "drawRect",
         id: `card-${idx}`,
-        x: 485,
-        y: 105,
-        width: 435,
-        height: 290,
-        rx: 14,
-        stroke: cardColor,
-        strokeWidth: 2,
-        fill: cardBg,
-        details: `Structured conceptual breakdown of ${heading}.`,
-        tooltip: "Concept Breakdown",
-      },
-      {
-        type: "addText",
-        id: `card-title-${idx}`,
-        text: `Key Dynamics: ${heading}`,
-        x: 510,
-        y: 140,
-        fontSize: 15,
-        fill: cardColor,
-        fontWeight: "bold",
-      },
-      {
-        type: "addText",
-        id: `bullet1-${idx}`,
-        text: `• ${bullet1}`,
-        x: 510,
-        y: 180,
-        fontSize: 13,
-        fill: "#334155",
-        fontWeight: "normal",
-        details: bullet1,
-      },
-      {
-        type: "addText",
-        id: `bullet2-${idx}`,
-        text: `• ${bullet2}`,
-        x: 510,
-        y: 215,
-        fontSize: 13,
-        fill: "#334155",
-        fontWeight: "normal",
-        details: bullet2,
-      },
-      {
-        type: "addText",
-        id: `bullet3-${idx}`,
-        text: `• ${bullet3}`,
-        x: 510,
-        y: 250,
-        fontSize: 13,
-        fill: "#334155",
-        fontWeight: "normal",
-        details: bullet3,
-      },
-      {
-        type: "drawArrow",
-        id: `flow-arr-${idx}`,
-        x1: 465,
-        y1: 250,
-        x2: 485,
-        y2: 250,
-        stroke: cardColor,
-        strokeWidth: 2.5,
-        label: "Sync",
-      },
-    ];
-
-    // 4. Bottom Milestone / Key Takeaway Callout Box
-    const takeawayActions: any[] = [
-      {
-        type: "drawRect",
-        id: `takeaway-box-${idx}`,
-        x: 80,
-        y: 420,
-        width: 840,
-        height: 75,
-        rx: 12,
-        stroke: "#d97706",
+        x: 555,
+        y: 90,
+        width: 370,
+        height: 300,
+        rx: 10,
+        stroke: pal.accent,
         strokeWidth: 1.5,
-        fill: "rgba(254, 243, 199, 0.75)",
-        details: keyTakeaway || `Core principle of ${heading}`,
-        tooltip: "Master Takeaway",
+        fill: pal.bg,
+        details: `Concept notes for ${heading}`,
       },
       {
         type: "addText",
-        id: `takeaway-txt-${idx}`,
-        text: `💡 Key Insight: ${keyTakeaway || narration.substring(0, 85)}...`,
-        x: 105,
-        y: 462,
-        fontSize: 13,
-        fill: "#92400e",
+        id: `card-h-${idx}`,
+        text: heading.length > 28 ? heading.substring(0, 25) + "..." : heading,
+        x: 575,
+        y: 118,
+        fontSize: 14,
+        fill: pal.accent,
         fontWeight: "bold",
-        details: keyTakeaway || narration,
+      },
+      // Separator
+      {
+        type: "drawLine",
+        id: `card-sep-${idx}`,
+        x1: 575,
+        y1: 128,
+        x2: 905,
+        y2: 128,
+        stroke: pal.accent,
+        strokeWidth: 0.5,
       },
     ];
 
-    // Compose final actions: Clear -> Banner -> Left Visuals -> Right Concepts -> Bottom Takeaway
+    // Bullet points
+    bullets.slice(0, 4).forEach((b, bi) => {
+      rightCardActions.push({
+        type: "addText",
+        id: `bul-${idx}-${bi}`,
+        text: `${bi + 1}. ${b}`,
+        x: 575,
+        y: 155 + bi * 30,
+        fontSize: 12,
+        fill: "#334155",
+        fontWeight: "normal",
+        details: b,
+      });
+    });
+
+    // Key Takeaway inside the card (instead of a giant bottom bar)
+    if (keyTakeaway) {
+      rightCardActions.push(
+        {
+          type: "drawRect",
+          id: `tk-box-${idx}`,
+          x: 570,
+          y: 310,
+          width: 340,
+          height: 60,
+          rx: 8,
+          stroke: "#d97706",
+          strokeWidth: 1,
+          fill: "rgba(254, 243, 199, 0.5)",
+        },
+        {
+          type: "addText",
+          id: `tk-txt-${idx}`,
+          text: clip(keyTakeaway, 50),
+          x: 585,
+          y: 345,
+          fontSize: 11,
+          fill: "#92400e",
+          fontWeight: "bold",
+          details: keyTakeaway,
+        },
+      );
+    }
+
+    // Compose final layout
     visualActions = [
       { type: "clear" },
-      ...bannerActions,
+      ...headerActions,
       ...leftVisualActions,
       ...rightCardActions,
-      ...takeawayActions,
     ];
 
     return {

@@ -123,3 +123,17 @@ body {
 .btn-interactive:active {
   transform: scale(0.96);
 }
+
+/* Teacher pointer arm gentle gesture */
+@keyframes teacher-point {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-4deg); }
+  50% { transform: rotate(2deg); }
+  75% { transform: rotate(-2deg); }
+}
+
+/* Audio equalizer bars */
+@keyframes eq-bar {
+  0% { transform: scaleY(0.4); }
+  100% { transform: scaleY(1); }
+}
