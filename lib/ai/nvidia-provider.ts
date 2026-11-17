@@ -1,6 +1,8 @@
 import { AIProvider, AIProviderOptions, LessonContext } from "./provider";
 import { Lesson, LessonSchema } from "@/lib/schemas/lesson-schema";
 import { LESSON_SYSTEM_PROMPT, FOLLOWUP_SYSTEM_PROMPT } from "./prompts";
+import { getVisualAssetsForTopic } from "@/lib/visuals/visual-provider";
+import { EducationalVisualAsset } from "@/lib/visuals/visual-attribution";
 
 export class NvidiaNIMProvider implements AIProvider {
   name = "NVIDIA NIM (Hosted Inference)";
@@ -89,6 +91,14 @@ export class NvidiaNIMProvider implements AIProvider {
     const timeout = setTimeout(() => controller.abort(), 60000); // 60s timeout
 
     try {
+      // 1. Fetch real educational visual assets from Wikimedia Commons for this topic
+      let visualAssets: EducationalVisualAsset[] = [];
+      try {
+        visualAssets = await getVisualAssetsForTopic(topic);
+      } catch (assetErr) {
+        console.warn("Visual assets retrieval notice:", assetErr);
+      }
+
       const response = await fetch(`${baseUrl}/chat/completions`, {
         method: "POST",
         headers: {
@@ -104,11 +114,11 @@ export class NvidiaNIMProvider implements AIProvider {
             },
             {
               role: "user",
-              content: `Please create a complete 2-minute whiteboard educational lesson on the topic: "${topic.trim()}". Return the response strictly as valid JSON adhering to the whiteboard schema.`,
+              content: `Please create a complete educational masterclass on the topic: "${topic.trim()}". Return the response strictly as valid JSON adhering to the whiteboard schema.`,
             },
           ],
           temperature: 0.2,
-          max_tokens: 3500,
+          max_tokens: 3800,
           chat_template_kwargs: { thinking: false },
         }),
         signal: controller.signal,
@@ -165,10 +175,10 @@ export class NvidiaNIMProvider implements AIProvider {
         );
       }
 
-      // Normalize potential LLM key aliases (e.g. title -> heading, content -> narration)
-      const normalized = normalizeLessonJson(parsedJson, topic);
+      // 2. Normalize and enrich with real images, layout structure & high-contrast coordinates
+      const normalized = normalizeLessonJson(parsedJson, topic, visualAssets);
 
-      // Validate with Zod
+      // 3. Validate with Zod
       const validatedLesson = LessonSchema.parse(normalized);
       return validatedLesson;
     } catch (err: unknown) {
@@ -198,6 +208,7 @@ export class NvidiaNIMProvider implements AIProvider {
 Topic: ${context.topic}
 Lesson Title: ${context.lesson.title}
 Overview: ${context.lesson.summary}
+
 Segments Taught:
 ${context.lesson.segments
   .map(
@@ -281,7 +292,7 @@ ${context.lesson.segments
   }
 }
 
-function normalizeLessonJson(raw: any, topic: string) {
+function normalizeLessonJson(raw: any, topic: string, visualAssets: EducationalVisualAsset[] = []) {
   if (!raw || typeof raw !== "object") return raw;
 
   const title = raw.title || raw.lessonTitle || topic;
@@ -289,8 +300,9 @@ function normalizeLessonJson(raw: any, topic: string) {
     raw.summary ||
     raw.overview ||
     raw.description ||
-    `Educational lesson explaining ${topic}.`;
+    `Educational masterclass explaining ${topic}.`;
   const estimatedDuration = Number(raw.estimatedDuration) || 120;
+  const keyTakeaways = Array.isArray(raw.keyTakeaways) ? raw.keyTakeaways : [];
 
   const rawSegments = Array.isArray(raw.segments)
     ? raw.segments
@@ -315,6 +327,7 @@ function normalizeLessonJson(raw: any, topic: string) {
       : Array.isArray(seg.drawActions)
       ? seg.drawActions
       : [];
+
     let visualActions: any[] = [];
     const validTypes = [
       "addText",
@@ -325,9 +338,18 @@ function normalizeLessonJson(raw: any, topic: string) {
       "drawArrow",
       "highlight",
       "addLabel",
+      "drawImage",
       "erase",
       "clear",
     ];
+
+    // Check if LLM already output a valid image
+    let hasImage = rawActions.some(
+      (a: any) =>
+        (a.type === "drawImage" || a.type === "image") &&
+        typeof a.url === "string" &&
+        a.url.startsWith("http")
+    );
 
     if (rawActions.length > 0) {
       visualActions = rawActions.map((act: any, aIdx: number) => {
@@ -339,25 +361,36 @@ function normalizeLessonJson(raw: any, topic: string) {
         else if (type === "rect" || type === "rectangle") type = "drawRect";
         else if (type === "path") type = "drawPath";
         else if (type === "label") type = "addLabel";
+        else if (type === "image") type = "drawImage";
 
         if (!validTypes.includes(type)) {
-          if (act.text) type = "addText";
+          if (act.url) type = "drawImage";
+          else if (act.text) type = "addText";
           else if (act.cx !== undefined) type = "drawCircle";
           else if (act.x1 !== undefined && act.x2 !== undefined) type = "drawLine";
           else type = "drawRect";
         }
 
-        // Guarantee required numeric fields for specific types
+        // Guarantee high contrast fills & visible coordinates on white smartboard
         if (type === "addText") {
+          const rawFill = act.fill || "";
+          const isTooLight =
+            !rawFill ||
+            rawFill === "#f8fafc" ||
+            rawFill === "#ffffff" ||
+            rawFill === "#fff" ||
+            rawFill.includes("255, 255, 255");
           return {
             type: "addText",
             id: act.id || `act-txt-${idx}-${aIdx}`,
             text: String(act.text || heading),
             x: Number(act.x) || 500,
             y: Number(act.y) || 80,
-            fontSize: Number(act.fontSize) || 18,
-            fill: act.fill || "#f8fafc",
+            fontSize: Number(act.fontSize) || 16,
+            fill: isTooLight ? "#0f172a" : rawFill,
             fontWeight: act.fontWeight || "normal",
+            details: act.details || `Key concept text: ${act.text}`,
+            tooltip: act.tooltip || act.text,
           };
         } else if (type === "drawCircle") {
           return {
@@ -365,10 +398,12 @@ function normalizeLessonJson(raw: any, topic: string) {
             id: act.id || `act-circ-${idx}-${aIdx}`,
             cx: Number(act.cx) || 400,
             cy: Number(act.cy) || 300,
-            r: Number(act.r) || 50,
-            stroke: act.stroke || "#38bdf8",
-            strokeWidth: Number(act.strokeWidth) || 3,
-            fill: act.fill || "none",
+            r: Number(act.r) || 45,
+            stroke: act.stroke || "#1677ff",
+            strokeWidth: Number(act.strokeWidth) || 2.5,
+            fill: act.fill || "rgba(224, 242, 254, 0.6)",
+            details: act.details || "Core visual component",
+            tooltip: act.tooltip || "Component Node",
           };
         } else if (type === "drawRect") {
           return {
@@ -376,23 +411,25 @@ function normalizeLessonJson(raw: any, topic: string) {
             id: act.id || `act-rect-${idx}-${aIdx}`,
             x: Number(act.x) || 300,
             y: Number(act.y) || 200,
-            width: Number(act.width) || 200,
-            height: Number(act.height) || 120,
-            rx: Number(act.rx) || 10,
-            stroke: act.stroke || "#34d399",
+            width: Number(act.width) || 220,
+            height: Number(act.height) || 140,
+            rx: Number(act.rx) || 12,
+            stroke: act.stroke || "#1677ff",
             strokeWidth: Number(act.strokeWidth) || 2,
-            fill: act.fill || "rgba(30, 41, 59, 0.4)",
+            fill: act.fill || "rgba(238, 242, 255, 0.7)",
+            details: act.details || "Structured concept card",
+            tooltip: act.tooltip || "Concept Specification",
           };
         } else if (type === "drawLine") {
           return {
             type: "drawLine",
             id: act.id || `act-line-${idx}-${aIdx}`,
-            x1: Number(act.x1) || 200,
-            y1: Number(act.y1) || 300,
-            x2: Number(act.x2) || 450,
-            y2: Number(act.y2) || 300,
-            stroke: act.stroke || "#60a5fa",
-            strokeWidth: Number(act.strokeWidth) || 3,
+            x1: Number(act.x1) || 150,
+            y1: Number(act.y1) || 80,
+            x2: Number(act.x2) || 850,
+            y2: Number(act.y2) || 80,
+            stroke: act.stroke || "#1677ff",
+            strokeWidth: Number(act.strokeWidth) || 2,
           };
         } else if (type === "drawArrow") {
           return {
@@ -400,11 +437,27 @@ function normalizeLessonJson(raw: any, topic: string) {
             id: act.id || `act-arrow-${idx}-${aIdx}`,
             x1: Number(act.x1) || 300,
             y1: Number(act.y1) || 300,
-            x2: Number(act.x2) || 500,
+            x2: Number(act.x2) || 480,
             y2: Number(act.y2) || 300,
-            stroke: act.stroke || "#fbbf24",
-            strokeWidth: Number(act.strokeWidth) || 3,
-            label: act.label,
+            stroke: act.stroke || "#0284c7",
+            strokeWidth: Number(act.strokeWidth) || 2.5,
+            label: act.label || "Flow",
+            details: act.details || "Directional connection",
+          };
+        } else if (type === "drawImage") {
+          return {
+            type: "drawImage",
+            id: act.id || `act-img-${idx}-${aIdx}`,
+            url: act.url,
+            x: Number(act.x) || 80,
+            y: Number(act.y) || 130,
+            width: Number(act.width) || 380,
+            height: Number(act.height) || 270,
+            caption: act.caption || heading,
+            attribution: act.attribution || "Wikimedia Commons",
+            license: act.license || "CC BY-SA",
+            details: act.details || `Educational illustration for ${heading}`,
+            tooltip: act.tooltip || act.caption || heading,
           };
         }
 
@@ -416,42 +469,167 @@ function normalizeLessonJson(raw: any, topic: string) {
       });
     }
 
-    if (visualActions.length === 0) {
-      visualActions = [
-        {
-          type: "addText",
-          id: `txt-${idx}-title`,
-          text: heading,
-          x: 500,
-          y: 80,
-          fontSize: 22,
-          fill: "#f8fafc",
-          fontWeight: "bold",
-        },
-        {
-          type: "drawRect",
-          id: `rect-${idx}`,
-          x: 200 + (idx % 2) * 50,
-          y: 180,
-          width: 500,
-          height: 240,
-          rx: 16,
-          stroke: idx % 2 === 0 ? "#38bdf8" : "#818cf8",
-          strokeWidth: 3,
-          fill:
-            idx % 2 === 0
-              ? "rgba(56, 189, 248, 0.12)"
-              : "rgba(129, 140, 248, 0.12)",
-        },
-        {
-          type: "addLabel",
-          id: `lbl-${idx}`,
-          text: `Key Concept: ${heading.substring(0, 25)}`,
-          x: 450,
-          y: 450,
-          color: "#34d399",
-        },
-      ];
+    // If segment has no image and we have visualAssets, inject a real Wikimedia image!
+    if (!hasImage && visualAssets.length > 0) {
+      const asset = visualAssets[idx % visualAssets.length];
+      const imageAction = {
+        type: "drawImage",
+        id: `real-img-${idx + 1}`,
+        url: asset.url,
+        x: 80,
+        y: 130,
+        width: 380,
+        height: 270,
+        caption: asset.title,
+        attribution: asset.attribution.author,
+        license: asset.attribution.license,
+        details: asset.description || asset.title,
+        tooltip: asset.title,
+      };
+
+      // Put real image at the front of visual actions
+      visualActions.unshift(imageAction);
+      hasImage = true;
+    }
+
+    // Guarantee that visualActions contains a rich, complete diagram (min 6 actions)
+    if (visualActions.length < 5) {
+      const isFirst = idx === 0;
+      const cardColor = isFirst ? "#1677ff" : idx % 2 === 0 ? "#059669" : "#d97706";
+      const cardBg = isFirst
+        ? "rgba(238, 242, 255, 0.75)"
+        : idx % 2 === 0
+        ? "rgba(236, 253, 245, 0.75)"
+        : "rgba(254, 243, 199, 0.75)";
+
+      // Top Header Title Banner
+      visualActions.unshift({
+        type: "addText",
+        id: `banner-${idx}`,
+        text: `${heading}`,
+        x: 500,
+        y: 65,
+        fontSize: 20,
+        fill: "#0f172a",
+        fontWeight: "bold",
+        details: `Chapter ${idx + 1}: ${heading}`,
+      });
+
+      // Top Divider Line
+      visualActions.push({
+        type: "drawLine",
+        id: `div-${idx}`,
+        x1: 120,
+        y1: 85,
+        x2: 880,
+        y2: 85,
+        stroke: cardColor,
+        strokeWidth: 2,
+      });
+
+      // Right-side Architecture / Specifications Card
+      visualActions.push({
+        type: "drawRect",
+        id: `card-${idx}`,
+        x: 490,
+        y: 130,
+        width: 430,
+        height: 270,
+        rx: 14,
+        stroke: cardColor,
+        strokeWidth: 2,
+        fill: cardBg,
+        details: `Architectural breakdown and core mechanisms for ${heading}.`,
+        tooltip: "Mechanism Breakdown",
+      });
+
+      // Card Header
+      visualActions.push({
+        type: "addText",
+        id: `card-title-${idx}`,
+        text: `Core Dynamics: ${heading}`,
+        x: 520,
+        y: 165,
+        fontSize: 15,
+        fill: cardColor,
+        fontWeight: "bold",
+      });
+
+      // Bullet points
+      visualActions.push({
+        type: "addText",
+        id: `bullet1-${idx}`,
+        text: `• Mechanism: Integrated systems & workflow structure`,
+        x: 520,
+        y: 205,
+        fontSize: 13,
+        fill: "#334155",
+        details: "Primary functional workflow of this component.",
+      });
+
+      visualActions.push({
+        type: "addText",
+        id: `bullet2-${idx}`,
+        text: `• Interaction: Real-time response and boundary flow`,
+        x: 520,
+        y: 235,
+        fontSize: 13,
+        fill: "#334155",
+        details: "Internal communication pathway between elements.",
+      });
+
+      visualActions.push({
+        type: "addText",
+        id: `bullet3-${idx}`,
+        text: `• Innovation: Solved key engineering bottlenecks`,
+        x: 520,
+        y: 265,
+        fontSize: 13,
+        fill: "#334155",
+        details: "Historical breakthrough that enabled modern performance.",
+      });
+
+      // Connecting Arrow
+      visualActions.push({
+        type: "drawArrow",
+        id: `flow-arr-${idx}`,
+        x1: 460,
+        y1: 265,
+        x2: 490,
+        y2: 265,
+        stroke: cardColor,
+        strokeWidth: 2.5,
+        label: "Drives",
+        details: "Direct functional connection between visual model and specs.",
+      });
+
+      // Bottom Milestone / Key Takeaway Callout Box
+      visualActions.push({
+        type: "drawRect",
+        id: `takeaway-box-${idx}`,
+        x: 80,
+        y: 430,
+        width: 840,
+        height: 75,
+        rx: 12,
+        stroke: "#d97706",
+        strokeWidth: 1.5,
+        fill: "rgba(254, 243, 199, 0.7)",
+        details: keyTakeaway || `Key principle of ${heading}`,
+        tooltip: "Master Takeaway",
+      });
+
+      visualActions.push({
+        type: "addText",
+        id: `takeaway-txt-${idx}`,
+        text: `💡 Key Takeaway: ${keyTakeaway || narration.substring(0, 90)}...`,
+        x: 105,
+        y: 472,
+        fontSize: 13,
+        fill: "#92400e",
+        fontWeight: "bold",
+        details: keyTakeaway || narration,
+      });
     }
 
     return {
@@ -469,6 +647,7 @@ function normalizeLessonJson(raw: any, topic: string) {
     topic: raw.topic || topic,
     summary,
     estimatedDuration,
+    keyTakeaways,
     segments,
     createdAt: raw.createdAt || new Date().toISOString(),
   };

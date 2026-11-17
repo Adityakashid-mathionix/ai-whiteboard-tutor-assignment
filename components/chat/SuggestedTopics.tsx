@@ -55,6 +55,16 @@ export const SUGGESTED_TOPICS = [
     exemplarKey: "react_native",
     badge: "Mobile Deep Dive",
   },
+  {
+    title: "The Evolution of Laptops",
+    category: "Hardware & Computing",
+    description: "From 25-pound luggables to clamshells, TFT displays, TrackPoints, and modern ARM silicon.",
+    icon: Sparkles,
+    color: "bg-indigo-50 text-indigo-600 border-indigo-200",
+    slug: "The Evolution of Laptops",
+    exemplarKey: "laptop",
+    badge: "Hardware History",
+  },
 ];
 
 interface SuggestedTopicsProps {

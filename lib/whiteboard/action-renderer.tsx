@@ -51,6 +51,7 @@ export const WhiteboardActionRenderer: React.FC<WhiteboardActionRendererProps> =
           {/* Educational Vector Image / Illustration */}
           <image
             href={action.url}
+            xlinkHref={action.url}
             x={action.x}
             y={action.y}
             width={action.width}

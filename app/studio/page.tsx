@@ -54,6 +54,10 @@ function StudioContent() {
         setLesson(EXEMPLAR_LESSONS.react_native || (EXEMPLAR_LESSONS as any).reactnative);
         setIsLoading(false);
         return;
+      } else if (lowerTopic.includes("laptop") && EXEMPLAR_LESSONS.laptop) {
+        setLesson(EXEMPLAR_LESSONS.laptop);
+        setIsLoading(false);
+        return;
       }
     }
 

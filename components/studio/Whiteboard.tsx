@@ -65,7 +65,7 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
   const [activeTool, setActiveTool] = useState<"pointer" | "pan" | "pen" | "highlighter" | "eraser">("pointer");
   const [penColor, setPenColor] = useState<string>("#1677ff");
   const [laserPos, setLaserPos] = useState<{ x: number; y: number } | null>(null);
-  const [showLaser, setShowLaser] = useState(true);
+  const [showLaser, setShowLaser] = useState(false); // Disabled by default to prevent distracting jumping dot
 
   // Pan state
   const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -514,22 +514,22 @@ export const Whiteboard: React.FC<WhiteboardProps> = ({
               )}
             </g>
 
-            {/* Real-time Teacher Laser Pointer */}
+            {/* Real-time Teacher Laser Pointer (Only visible when user toggles laser on) */}
             {laserPos && showLaser && (
               <g className="transition-all duration-300 pointer-events-none">
                 <circle
                   cx={laserPos.x}
                   cy={laserPos.y}
-                  r="7"
-                  fill="#ff3355"
-                  className="animate-ping opacity-75"
+                  r="6"
+                  fill="#ef4444"
+                  opacity="0.9"
+                  filter="drop-shadow(0 0 6px rgba(239, 68, 68, 0.7))"
                 />
                 <circle
                   cx={laserPos.x}
                   cy={laserPos.y}
-                  r="4"
-                  fill="#e62e4d"
-                  filter="drop-shadow(0 0 6px #ff3355)"
+                  r="2.5"
+                  fill="#ffffff"
                 />
               </g>
             )}
