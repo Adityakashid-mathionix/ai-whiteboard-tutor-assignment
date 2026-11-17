@@ -7,7 +7,7 @@ import { sanitizeWhiteboardAction } from "@/lib/whiteboard/action-validator";
 export function useWhiteboard() {
   const [actions, setActions] = useState<WhiteboardAction[]>([]);
   const [zoom, setZoom] = useState<number>(1);
-  const [showGrid, setShowGrid] = useState<boolean>(true);
+  const [showGrid, setShowGrid] = useState<boolean>(false);
 
   /**
    * Applies an array of actions on top of current board state
