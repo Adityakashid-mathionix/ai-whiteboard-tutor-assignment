@@ -5,6 +5,8 @@ plans a 4–6 chapter lesson, speaks each chapter in a teacher's voice, and buil
 diagram that actually fits that explanation on a 1000 × 600 vector board you can
 annotate, pause and question.
 
+**Live demo:** https://ai-whiteboard-tutor-two.vercel.app
+
 Built for the Braynix Studios technical assignment.
 
 ---
